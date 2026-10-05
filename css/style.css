@@ -290,3 +290,11 @@ details.mp-fold{overflow:hidden;}
 .diet-ref-preview{background:var(--bg); border:1px solid var(--line-soft); padding:8px 12px; max-height:420px; overflow:auto; font-size:13.5px;}
 .diet-ref-preview p, .diet-ref-preview li{font-size:13.5px;}
 @media (max-width:900px){ .diet-ref-split{grid-template-columns:1fr;} }
+/* ---------- My diets: display view ---------- */
+.diet-card-click{cursor:pointer; transition:border-color .15s;}
+.diet-card-click:hover, .diet-card-click:focus-visible{border-color:var(--accent);}
+.diet-card-open{margin-top:auto; font-family:'IBM Plex Mono',monospace; font-size:12px; text-transform:uppercase; color:var(--accent);}
+.diet-view-head{display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap; margin-bottom:8px;}
+.diet-view-title{font-size:28px;}
+.diet-view-actions{display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
+.diet-view-summary{font-size:15px; color:var(--muted); max-width:75ch; margin:6px 0 10px;}

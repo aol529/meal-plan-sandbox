@@ -164,6 +164,8 @@
   let editing = null;      // { id, draft }
   let editVariant = null;
   let openRef = null;      // which reference section's text box is open
+  let viewingId = null;    // My diets: which diet's display view is open
+  let viewVariant = null;
   function baseOf(id){ return bases.find(x=> x.id === id) || {}; }
   // Open the editor straight on one diet (e.g. from "Edit this diet").
   function startEditing(id){
@@ -173,18 +175,45 @@
     editing.draft.how = editing.draft.how || { lede: '', steps: [], caution: '' };
     editing.draft.reference = editing.draft.reference || [];
     editVariant = null; openRef = null;
+    viewingId = d.id;
   }
 
   function editorListHtml(user){
     const mine = ownedBy(user);
     if (!mine.length) return '<div class="empty-msg">You haven’t written any diets yet.</div>';
     return '<div class="diet-cards">' + mine.map(d=>
-      '<div class="diet-card"><div class="diet-card-head"><h3>' + esc(d.name) + '</h3>' +
+      '<div class="diet-card diet-card-click" data-diet-view="' + esc(d.id) + '" role="button" tabindex="0" aria-label="Open ' + esc(d.name) + '">' +
+      '<div class="diet-card-head"><h3>' + esc(d.name) + '</h3>' +
       '<span class="' + (d.published ? 'mp-pill ok' : 'diet-private') + '">' + (d.published ? 'Published' : '🔒 Not published') + '</span></div>' +
       '<p>' + esc(d.summary) + '</p>' +
+      '<div class="diet-tags">' + (d.tags || []).map(t=> '<span>' + esc(t) + '</span>').join('') + '</div>' +
       '<div class="field-hint">' + (d.editedAt ? 'Last edited ' + fmtDate(d.editedAt) : 'Original version from its file') + '</div>' +
-      '<button type="button" class="btn2 primary" data-diet-edit="' + esc(d.id) + '">Edit</button></div>'
+      '<span class="diet-card-open">Open →</span></div>'
     ).join('') + '</div>';
+  }
+
+  /* Display view: the diet exactly as members see it (minus the
+     try/stop controls), with its status and an Edit button. */
+  function viewHtml(d){
+    const v = d.variants.find(x=> x.id === viewVariant) || d.variants[0];
+    viewVariant = v.id;
+    let html = '<button type="button" class="btn2 diet-back" data-view-close>← My diets</button>' +
+      '<div class="diet-view-head"><div><h2 class="diet-view-title">' + esc(d.name) + '</h2>' +
+      '<div class="field-hint">by ' + esc(d.author) + ' · ' + (d.editedAt ? 'last edited ' + fmtDate(d.editedAt) : 'original version from its file') + '</div></div>' +
+      '<div class="diet-view-actions"><span class="' + (d.published ? 'mp-pill ok' : 'diet-private') + '">' + (d.published ? 'Published — members can try it' : '🔒 Not published') + '</span>' +
+      '<button type="button" class="btn2 primary" data-view-edit>✏️ Edit</button></div></div>' +
+      '<p class="diet-view-summary">' + esc(d.summary) + '</p>' +
+      '<div class="diet-tags">' + (d.tags || []).map(t=> '<span>' + esc(t) + '</span>').join('') + '</div>';
+    html += '<div class="mp-sub-head">The week</div><div class="sched-sub diet-variants">' + d.variants.map(x=>
+      '<button type="button" data-view-variant="' + esc(x.id) + '" class="' + (x.id === v.id ? 'active' : '') + '">' + esc(x.label) + '</button>').join('') + '</div>';
+    if ((v.forGoals || []).length) html += '<div class="field-hint" style="margin:-8px 0 8px;">Suggested to members whose goal is: ' + esc(v.forGoals.join(', ')) + '</div>';
+    if (v.intro) html += '<div class="diet-variant-intro">' + rich(v.intro) + '</div>';
+    html += weekTableHtml(v.week);
+    if (v.footnote) html += '<div class="ka-small">' + rich(v.footnote) + '</div>';
+    if (d.weekCaution) html += '<div class="admin-notice mp-refer">' + rich(d.weekCaution) + '</div>';
+    html += '<div class="mp-sub-head">How this diet works <span class="field-hint">— as shown for ' + esc(v.label) + '</span></div>' + howHtml(d, v);
+    if ((d.reference || []).length) html += '<div class="mp-sub-head">Background & reference</div>' + referenceHtml(d, null);
+    return html;
   }
 
   function cellInput(value, attrs){ return '<input type="text" class="mp-input diet-cell" value="' + esc(value) + '" ' + attrs + '>'; }
@@ -194,7 +223,7 @@
     const v = d.variants.find(x=> x.id === editVariant) || d.variants[0];
     editVariant = v.id;
     const vi = d.variants.indexOf(v);
-    let html = '<button type="button" class="btn2 diet-back" data-edit-close>← My diets</button>' +
+    let html = '<button type="button" class="btn2 diet-back" data-edit-close>← Back without saving</button>' +
       '<div class="day-focus">Editing · ' + esc(d.name) + '</div>' +
       '<div class="admin-notice">Changes go live for members when you press <b>Save</b>. In text boxes, a blank line starts a new paragraph and <b>**double asterisks**</b> make text bold.</div>';
 
@@ -288,13 +317,26 @@
   }
 
   function renderEditor(root, user, toast, onDone){
+    const top = ()=> window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (!editing && viewingId && get(viewingId)){
+      root.innerHTML = viewHtml(get(viewingId));
+      const re = ()=> renderEditor(root, user, toast, onDone);
+      root.querySelector('[data-view-close]').addEventListener('click', ()=>{ viewingId = null; viewVariant = null; re(); top(); });
+      root.querySelector('[data-view-edit]').addEventListener('click', ()=>{
+        const keep = viewVariant;
+        startEditing(viewingId); editVariant = keep;   // open the editor on the option you were looking at
+        re(); top();
+      });
+      root.querySelectorAll('[data-view-variant]').forEach(b=> b.addEventListener('click', ()=>{ viewVariant = b.getAttribute('data-view-variant'); re(); }));
+      return;
+    }
     if (!editing){
       root.innerHTML = editorListHtml(user);
-      root.querySelectorAll('[data-diet-edit]').forEach(b=> b.addEventListener('click', ()=>{
-        startEditing(b.getAttribute('data-diet-edit'));
-        renderEditor(root, user, toast, onDone);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      }));
+      root.querySelectorAll('[data-diet-view]').forEach(card=>{
+        const open = ()=>{ viewingId = card.getAttribute('data-diet-view'); viewVariant = null; renderEditor(root, user, toast, onDone); top(); };
+        card.addEventListener('click', open);
+        card.addEventListener('keydown', e=>{ if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); open(); } });
+      });
       return;
     }
     root.innerHTML = editorHtml();
@@ -323,20 +365,20 @@
       const st = editing.draft.how.steps; const j = si + dir;
       if (j >= 0 && j < st.length) [st[si], st[j]] = [st[j], st[si]];
     });
-    root.querySelector('[data-edit-close]').addEventListener('click', ()=>{ editing = null; again(); });
+    root.querySelector('[data-edit-close]').addEventListener('click', ()=>{ viewVariant = editVariant; editing = null; again(); window.scrollTo({ top: 0, behavior: 'smooth' }); });
     root.querySelector('[data-edit-save]').addEventListener('click', ()=>{
       readEditor(root);
       const diet = get(editing.id);
       try { S.saveDietEdits(diet, editing.draft); } catch (err){ toast(err.message); return; }
       toast('Saved — members see the new version' + (editing.draft.published ? '.' : ' once it’s published.'));
-      editing = null; again(); if (onDone) onDone();
+      viewVariant = editVariant; editing = null; again(); window.scrollTo({ top: 0, behavior: 'smooth' }); if (onDone) onDone();
     });
     root.querySelector('[data-edit-reset]').addEventListener('click', ()=>{
       const diet = get(editing.id);
       if (!confirm('Throw away all your edits to ' + diet.name + ' and go back to the original from its file?')) return;
       try { S.clearDietEdits(diet); } catch (err){ toast(err.message); return; }
       toast('Back to the original version.');
-      editing = null; again(); if (onDone) onDone();
+      viewVariant = editVariant; editing = null; again(); window.scrollTo({ top: 0, behavior: 'smooth' }); if (onDone) onDone();
     });
   }
 

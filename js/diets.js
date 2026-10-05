@@ -20,7 +20,7 @@
 (function(){
   const S = window.MP_STORE;
   const bases = [];
-  const EDITABLE = ['name', 'summary', 'tags', 'published', 'variants', 'weekCaution', 'how', 'reference'];
+  const EDITABLE = ['name', 'summary', 'tags', 'published', 'precheck', 'variants', 'weekCaution', 'how', 'reference'];
 
   function esc(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
   function fmtDate(iso){ return new Date(iso).toLocaleDateString(undefined, { day:'numeric', month:'short', year:'numeric' }); }
@@ -95,11 +95,11 @@
       week.rows.map(r=> '<tr>' + r.map((c, i)=> i === 0 ? '<th scope="row">' + esc(c) + '</th>' : '<td>' + esc(c) + '</td>').join('') + '</tr>').join('') + '</table>';
   }
 
-  function howHtml(diet, variant){
+  function howHtml(diet, variant, answers){
     const how = diet.how || { steps: [] };
     const steps = how.steps.filter(s=> !s.options || !s.options.length || s.options.includes(variant.id));
     return (how.lede ? '<div class="mp-how-lede">' + rich(how.lede) + '</div>' : '') +
-      steps.map((s, i)=> '<div class="mp-how-step"><div class="mp-how-num">' + (i + 1) + '</div><div><h3>' + esc(s.title) + '</h3>' + rich(s.body) + '</div></div>').join('') +
+      steps.map((s, i)=> '<div class="mp-how-step"><div class="mp-how-num">' + (i + 1) + '</div><div><h3>' + esc(s.title) + '</h3>' + rich(s.body, diet.tokens, answers) + '</div></div>').join('') +
       (how.caution ? '<div class="admin-notice mp-refer">' + rich(how.caution) + '</div>' : '');
   }
 
@@ -138,6 +138,7 @@
     if (!diet.published){
       html += '<div class="admin-notice ka-private"><b>Not published — only you can see this diet.</b> Publish it from Coach → My diets.</div>';
     }
+    if (diet.precheck) html += '<div class="admin-notice mp-refer diet-precheck">' + rich(diet.precheck) + '</div>';
     html += '<div class="diet-trial-bar">' + (trying
       ? '<span>✅ You’re trying this diet' + (trial.variant_label ? ' — <b>' + esc(trial.variant_label) + '</b>' : '') + ' since ' + fmtDate(trial.started_at) + '.</span>' +
         (variant.id !== trial.variant ? '<button type="button" class="btn2 primary" data-diet-start>Switch to ' + esc(variant.label) + '</button>' : '') +
@@ -154,7 +155,7 @@
     if (variant.footnote) html += '<div class="ka-small">' + rich(variant.footnote) + '</div>';
     if (diet.weekCaution) html += '<div class="admin-notice mp-refer">' + rich(diet.weekCaution) + '</div>';
 
-    html += '<div class="mp-sub-head">How this diet works</div>' + howHtml(diet, variant);
+    html += '<div class="mp-sub-head">How this diet works</div>' + howHtml(diet, variant, answers);
     if ((diet.reference || []).length) html += '<div class="mp-sub-head">Background & reference</div>' + referenceHtml(diet, answers);
     return html;
   }
@@ -203,6 +204,7 @@
       '<div class="diet-view-actions"><span class="' + (d.published ? 'mp-pill ok' : 'diet-private') + '">' + (d.published ? 'Published — members can try it' : '🔒 Not published') + '</span>' +
       '<button type="button" class="btn2 primary" data-view-edit>✏️ Edit</button></div></div>' +
       '<p class="diet-view-summary">' + esc(d.summary) + '</p>' +
+      (d.precheck ? '<div class="admin-notice mp-refer diet-precheck">' + rich(d.precheck) + '</div>' : '') +
       '<div class="diet-tags">' + (d.tags || []).map(t=> '<span>' + esc(t) + '</span>').join('') + '</div>';
     html += '<div class="mp-sub-head">The week</div><div class="sched-sub diet-variants">' + d.variants.map(x=>
       '<button type="button" data-view-variant="' + esc(x.id) + '" class="' + (x.id === v.id ? 'active' : '') + '">' + esc(x.label) + '</button>').join('') + '</div>';
@@ -211,7 +213,7 @@
     html += weekTableHtml(v.week);
     if (v.footnote) html += '<div class="ka-small">' + rich(v.footnote) + '</div>';
     if (d.weekCaution) html += '<div class="admin-notice mp-refer">' + rich(d.weekCaution) + '</div>';
-    html += '<div class="mp-sub-head">How this diet works <span class="field-hint">— as shown for ' + esc(v.label) + '</span></div>' + howHtml(d, v);
+    html += '<div class="mp-sub-head">How this diet works <span class="field-hint">— as shown for ' + esc(v.label) + '</span></div>' + howHtml(d, v, null);
     if ((d.reference || []).length) html += '<div class="mp-sub-head">Background & reference</div>' + referenceHtml(d, null);
     return html;
   }
@@ -231,6 +233,7 @@
       '<div class="mp-editor-grid"><div class="mp-q"><label class="mp-q-label">Name</label><input type="text" class="mp-input" data-f="name" value="' + esc(d.name) + '"></div>' +
       '<div class="mp-q"><label class="mp-q-label">Tags <span class="field-hint">(comma-separated)</span></label><input type="text" class="mp-input" data-f="tags" value="' + esc((d.tags || []).join(', ')) + '"></div>' +
       '<div class="mp-q mp-wide"><label class="mp-q-label">Summary <span class="field-hint">(shown on the diet’s card)</span></label><textarea class="mp-input" rows="2" data-f="summary">' + esc(d.summary) + '</textarea></div></div>' +
+      '<div class="mp-q"><label class="mp-q-label">Before you try this <span class="field-hint">(shown at the top of the diet page, above the Try button)</span></label><textarea class="mp-input" rows="5" data-f="precheck">' + esc(d.precheck) + '</textarea></div>' +
       '<label class="mp-choice diet-publish"><input type="checkbox" data-f="published"' + (d.published ? ' checked' : '') + '> Published — every member can see and try it</label></div>';
 
     html += '<div class="diet-edit-section"><h3>Your week</h3><div class="sched-sub">' + d.variants.map(x=>

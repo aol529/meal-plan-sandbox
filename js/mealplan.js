@@ -263,10 +263,10 @@
   function checkinListHtml(rows){
     if (!rows.length) return '<div class="empty-msg">No check-ins yet.</div>';
     return '<table class="admin-table"><tr><th>Date</th><th>Weight</th>' +
-      CHECKIN_SCALES.map(s=> '<th>' + esc(s.id === 'ease' ? 'Ease' : s.label) + '</th>').join('') + '<th>Notes</th></tr>' +
+      CHECKIN_SCALES.map(s=> '<th>' + esc(s.id === 'ease' ? 'Ease' : s.label) + '</th>').join('') + '<th>Diet</th><th>Notes</th></tr>' +
       rows.map(r=> '<tr><td>' + fmtDate(r.created_at) + '</td><td>' + (r.weight_kg != null ? esc(r.weight_kg) + ' kg' : '—') + '</td>' +
         CHECKIN_SCALES.map(s=> '<td>' + r[s.id] + '/5</td>').join('') +
-        '<td>' + (r.notes ? esc(r.notes) : '—') + '</td></tr>').join('') + '</table>';
+        '<td>' + (r.diet ? esc(r.diet) : 'Coach\u2019s plan') + '</td><td>' + (r.notes ? esc(r.notes) : '—') + '</td></tr>').join('') + '</table>';
   }
   function checkinFormHtml(){
     let html = '<form class="mp-form" id="mp-checkin-form"><div class="mp-q"><label class="mp-q-label" for="mp-ci-weight">Current weight (kg, optional)</label>' +
@@ -503,7 +503,8 @@
   /* ============================================================
      MEMBER VIEW
      ============================================================ */
-  let memberPage = 'coach'; // 'coach' | 'ai' | 'how' | 'ka' (owner-only draft) — which page
+  let memberPage = 'coach'; // 'coach' | 'ai' | 'how' | 'diets' — which page
+  let dietOpenId = null, dietVariantId = null; // Try a diet: which diet / option is open
   let memberViewerId = null;
   let memberMode = null; // null = auto, 'edit' = editing the questionnaire
 
@@ -513,7 +514,7 @@
     if (!me){ memberBody.innerHTML = '<div class="empty-msg">Sign in to start your meal plan.</div>'; return; }
     // A different person opened the page (View as): start them on their
     // own plan/questionnaire, not on whatever page the last person left open.
-    if (memberViewerId !== me.id){ memberViewerId = me.id; memberPage = 'coach'; memberMode = null; }
+    if (memberViewerId !== me.id){ memberViewerId = me.id; memberPage = 'coach'; memberMode = null; dietOpenId = null; dietVariantId = null; }
     memberBody.innerHTML = '<div class="empty-msg">Loading…</div>';
     const d = await loadFor(me.id);
     if (d.error){ memberBody.innerHTML = '<div class="empty-msg">Couldn’t load your meal plan — check your connection and try again.</div>'; return; }
@@ -521,20 +522,50 @@
     const head = '<div class="day-head"><h2>Meal Plan</h2></div>';
     // Private draft page: only exists for the owner's account, and only
     // if the git-ignored js/coach-ka-draft.js is present.
-    const showKaDraft = !!(window.MP_COACH_KA && window.MP_COACH_KA.isOwner(me.id));
-    if (memberPage === 'ka' && !showKaDraft) memberPage = 'coach';
+    // "Try a diet" tab only when this viewer can see at least one diet
+    // (drafts are visible to their owner only — see js/diets.js).
+    const showDiets = !!(window.MP_DIETS && window.MP_DIETS.visibleTo(me).length);
+    if (memberPage === 'diets' && !showDiets) memberPage = 'coach';
     const pageTabs = '<div class="sched-sub mp-page-tabs">' +
       (d.intake ? '<button type="button" data-mp-page="coach" class="' + (memberPage === 'coach' ? 'active' : '') + '">Coach\u2019s plan</button>' +
         '<button type="button" data-mp-page="ai" class="' + (memberPage === 'ai' ? 'active' : '') + '">AI suggestion</button>' : '') +
       '<button type="button" data-mp-page="how" class="' + (memberPage === 'how' ? 'active' : '') + '">How it works</button>' +
-      (showKaDraft ? '<button type="button" data-mp-page="ka" class="mp-ka-tab' + (memberPage === 'ka' ? ' active' : '') + '">🔒 Coach KA (draft)</button>' : '') + '</div>';
+      (showDiets ? '<button type="button" data-mp-page="diets" class="' + (memberPage === 'diets' ? 'active' : '') + '">Try a diet</button>' : '') + '</div>';
     const wirePageTabs = ()=> memberBody.querySelectorAll('[data-mp-page]').forEach(b=> b.addEventListener('click', ()=>{
       memberPage = b.getAttribute('data-mp-page'); memberMode = null; renderMember(); window.scrollTo({ top: 0, behavior: 'smooth' });
     }));
 
-    if (memberPage === 'ka'){
-      memberBody.innerHTML = head + pageTabs + window.MP_COACH_KA.html(d.intake ? d.intake.answers : null);
+    if (memberPage === 'diets'){
+      const answers = d.intake ? d.intake.answers : null;
+      const trial = S.getTrial(me.id);
+      const diet = dietOpenId && window.MP_DIETS.visibleTo(me).find(x=> x.id === dietOpenId);
+      memberBody.innerHTML = head + pageTabs + (diet
+        ? window.MP_DIETS.detailHtml(diet, me, answers, trial, dietVariantId)
+        : window.MP_DIETS.listHtml(me, trial));
       wirePageTabs();
+      const rerender = ()=>{ renderMember(); };
+      memberBody.querySelectorAll('[data-diet-open]').forEach(b=> b.addEventListener('click', ()=>{
+        dietOpenId = b.getAttribute('data-diet-open'); dietVariantId = null; rerender(); window.scrollTo({ top: 0, behavior: 'smooth' });
+      }));
+      const back = memberBody.querySelector('[data-diet-back]');
+      if (back) back.addEventListener('click', ()=>{ dietOpenId = null; dietVariantId = null; rerender(); });
+      memberBody.querySelectorAll('[data-diet-variant]').forEach(b=> b.addEventListener('click', ()=>{
+        dietVariantId = b.getAttribute('data-diet-variant'); rerender();
+      }));
+      const start = memberBody.querySelector('[data-diet-start]');
+      if (start) start.addEventListener('click', ()=>{
+        const shown = memberBody.querySelector('[data-diet-variant].active');
+        const variant = diet.variants.find(v=> v.id === (shown && shown.getAttribute('data-diet-variant')));
+        try { S.startTrial(diet, variant); } catch (err){ toast(err.message); return; }
+        dietVariantId = null;
+        toast('You\u2019re trying ' + diet.name + (variant ? ' — ' + variant.label : '') + '. Your coach has been told.');
+        rerender();
+      });
+      const stop = memberBody.querySelector('[data-diet-stop]');
+      if (stop) stop.addEventListener('click', ()=>{
+        if (!confirm('Stop trying ' + diet.name + '?')) return;
+        S.stopTrial(); toast('Stopped. Your coach has been told.'); rerender();
+      });
       return;
     }
 
@@ -636,6 +667,7 @@
      COACH VIEW
      ============================================================ */
   let coachSelected = null;
+  let coachSection = 'clients'; // 'clients' | 'diets' (My diets — only for coaches who wrote one)
   let coachTab = 'answers'; // 'answers' | 'ai' | 'plan' | 'checkins'
   let pendingDraft = {};    // memberId -> { content, targets } copied from the AI page, not yet saved
 
@@ -645,13 +677,30 @@
     if (!me){ coachBody.innerHTML = ''; return; }
     coachBody.innerHTML = '<div class="empty-msg">Loading…</div>';
 
+    // Coaches who've written a diet also get "My diets" (the editor).
+    const ownsDiets = !!(window.MP_DIETS && window.MP_DIETS.ownedBy(me).length);
+    if (!ownsDiets) coachSection = 'clients';
+    const sectionTabs = ownsDiets ? '<div class="sched-sub mp-coach-sections">' +
+      '<button type="button" data-coach-sec="clients" class="' + (coachSection === 'clients' ? 'active' : '') + '">Clients\u2019 meal plans</button>' +
+      '<button type="button" data-coach-sec="diets" class="' + (coachSection === 'diets' ? 'active' : '') + '">My diets</button></div>' : '';
+    const wireSections = ()=> coachBody.querySelectorAll('[data-coach-sec]').forEach(b=> b.addEventListener('click', ()=>{
+      coachSection = b.getAttribute('data-coach-sec'); renderCoach(); window.scrollTo({ top: 0, behavior: 'smooth' });
+    }));
+    if (coachSection === 'diets'){
+      coachBody.innerHTML = sectionTabs + '<div id="mp-diet-editor"></div>';
+      wireSections();
+      window.MP_DIETS.renderEditor(document.getElementById('mp-diet-editor'), me, toast);
+      return;
+    }
+
     // RLS already limits these to the caller's own clients (or everyone,
     // for an admin) — no client-side filtering needed.
     const rows = S.visibleIntakes();
     const plans = { data: rows.map(r=> S.getPlan(r.member_id)).filter(Boolean) };
     const checkins = { data: [].concat.apply([], rows.map(r=> S.getCheckins(r.member_id))) };
     if (!rows.length){
-      coachBody.innerHTML = '<div class="empty-msg">No questionnaires yet. When one of your clients fills in theirs (Me → Meal Plan), it shows up here and you get a notification.</div>';
+      coachBody.innerHTML = sectionTabs + '<div class="empty-msg">No questionnaires yet. When one of your clients fills in theirs (Me → Meal Plan), it shows up here and you get a notification.</div>';
+      wireSections();
       return;
     }
     const planAt = {}; (plans.data || []).forEach(p=> planAt[p.member_id] = p.updated_at);
@@ -669,7 +718,8 @@
       '<button type="button" class="mp-client' + (r.member_id === coachSelected ? ' active' : '') + '" data-member="' + r.member_id + '">' +
       '<span>' + esc(nameOf(r.member_id)) + (referralFlags(r.answers).some(f=> f.strong) ? ' <span class="mp-flag-dot" title="Consider a dietitian referral">⚑</span>' : '') + '</span>' + status(r) + '</button>'
     ).join('') + '</div><div class="mp-client-detail" id="mp-coach-detail"><div class="empty-msg">Loading…</div></div></div>';
-    coachBody.innerHTML = html;
+    coachBody.innerHTML = sectionTabs + html;
+    wireSections();
     coachBody.querySelectorAll('.mp-client').forEach(b=> b.addEventListener('click', ()=>{
       coachSelected = b.getAttribute('data-member'); renderCoach();
     }));
@@ -688,6 +738,9 @@
     let html = '<div class="mp-detail-head"><h3>' + esc(nameOf(memberId)) + '</h3>' +
       '<span class="field-hint">Questionnaire sent ' + fmtDate(d.intake.submitted_at) +
       (d.intake.updated_at !== d.intake.submitted_at ? ', updated ' + fmtDate(d.intake.updated_at) : '') + '</span></div>';
+    const trial = S.getTrial(memberId);
+    if (trial) html += '<div class="admin-notice diet-active">Trying <b>' + esc(trial.diet_name) + '</b>' + (trial.variant_label ? ' (' + esc(trial.variant_label) + ')' : '') +
+      ' since ' + fmtDate(trial.started_at) + ' — alongside your plan. Their check-ins show which diet they were on.</div>';
     if (flags.length){
       const strong = flags.some(f=> f.strong);
       html += '<div class="admin-notice mp-refer"><b>' + (strong ? 'Consider referring to a registered dietitian:' : 'Worth checking:') + '</b><ul>' +

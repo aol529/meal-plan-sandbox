@@ -14,9 +14,9 @@
   const bellCount = document.getElementById('bell-count');
   const sideToggle = document.getElementById('side-toggle');
   // For accounts that are both a member and a coach/admin (e.g. the gym
-  // owner's own account): which side is showing. Plain members and
-  // plain coaches never see the toggle.
-  let side = 'coach';
+  // owner's own account): which side is showing. They land on the
+  // member side; plain members and plain coaches never see the toggle.
+  let side = 'member';
 
   function esc(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
   function roleLabel(u){
@@ -78,7 +78,7 @@
     side = b.getAttribute('data-side'); render(); window.scrollTo(0, 0);
   }));
 
-  viewerSelect.addEventListener('change', ()=>{ S.setViewer(viewerSelect.value); side = 'coach'; closeBell(); render(); window.scrollTo(0, 0); });
+  viewerSelect.addEventListener('change', ()=>{ S.setViewer(viewerSelect.value); side = 'member'; closeBell(); render(); window.scrollTo(0, 0); });
   // Lets the import snippet (README) refresh the page's view of the data.
   window.MP_APP = { refresh(){ renderViewerSelect(); render(); } };
   document.getElementById('reset-btn').addEventListener('click', ()=>{

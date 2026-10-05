@@ -243,3 +243,40 @@ details.mp-fold ul{padding-left:18px;}
 /* Let long one-line previews truncate instead of widening the layout. */
 .mp-client-detail, .mp-plan-grid, details.mp-fold, details.mp-fold > summary{min-width:0;}
 details.mp-fold{overflow:hidden;}
+
+/* ---------- Try a diet ---------- */
+.diet-cards{display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:14px;}
+.diet-card{background:var(--surface); border:1px solid var(--line-soft); padding:16px; display:flex; flex-direction:column; gap:8px;}
+.diet-card.trying{border-color:var(--accent);}
+.diet-card-head{display:flex; justify-content:space-between; align-items:baseline; gap:8px; flex-wrap:wrap;}
+.diet-card h3{font-size:19px;}
+.diet-card p{margin:0; font-size:14px; color:var(--muted); line-height:1.5;}
+.diet-card .btn2{align-self:flex-start; margin-top:auto;}
+.diet-private{font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:#e0736a; text-transform:uppercase;}
+.diet-tags{display:flex; flex-wrap:wrap; gap:6px;}
+.diet-tags span{font-family:'IBM Plex Mono',monospace; font-size:10.5px; text-transform:uppercase; border:1px solid var(--line); color:var(--muted); padding:2px 7px; border-radius:20px;}
+.diet-active{border-left-color:var(--accent);}
+.diet-active .btn2{margin-left:8px; padding:4px 10px;}
+.diet-back{margin-bottom:14px;}
+.diet-trial-bar{display:flex; align-items:center; gap:10px; flex-wrap:wrap; background:var(--surface); border:1px solid var(--line-soft); padding:10px 14px; font-size:14px;}
+.diet-trial-bar span{flex:1; min-width:220px;}
+.diet-variant-intro{font-size:14px; color:var(--muted); margin:0 0 10px;}
+.diet-week th[scope=row]{text-align:left; color:var(--text); font-family:'IBM Plex Sans',sans-serif; font-size:13px; text-transform:none; letter-spacing:0; white-space:nowrap;}
+.diet-week td{font-size:13px;}
+.diet-footnote{margin-bottom:6px;}
+
+/* ---------- My diets (coach editor) ---------- */
+.mp-coach-sections{margin-bottom:18px;}
+.diet-edit-section{background:var(--surface); border:1px solid var(--line-soft); padding:14px 16px; margin-bottom:14px;}
+.diet-edit-section > h3{font-size:16px; margin-bottom:12px;}
+.diet-publish{margin-top:4px;}
+.diet-week-edit{overflow-x:auto;}
+.diet-week-edit td{padding:3px;}
+.diet-cell{min-width:90px; padding:6px 8px !important; font-size:13px !important;}
+.diet-row-del{padding:4px 8px;}
+.diet-step-edit{border-top:1px solid var(--line-soft); padding:12px 0;}
+.diet-step-head{display:flex; align-items:center; gap:8px; margin-bottom:8px;}
+.diet-step-head .mp-input{flex:1;}
+.diet-step-head .btn2{padding:5px 9px;}
+.diet-step-opts{margin-top:8px;}
+.diet-edit-bar{position:sticky; bottom:0; display:flex; align-items:center; gap:10px; flex-wrap:wrap; background:var(--bg); border-top:1px solid var(--line); padding:12px 0;}

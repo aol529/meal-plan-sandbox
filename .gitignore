@@ -1,5 +1,3 @@
 node_modules/
 .DS_Store
 .env
-# Private draft (Coach KA 2025 plan) — kept out of the repo
-js/coach-ka-draft.js

@@ -11,13 +11,16 @@
    ============================================================ */
 (function(){
   const KEY = 'mealplan-sandbox-v1';
+  const KEVIN = '870adc3b-df42-4435-b3c5-942bb4cc2245';
 
   const SEED = {
     users: [
-      { id:'u-achol', fullName:'Achol Deng', roles:['member'], trainerId:'u-ka', height:165, weight:68 },
-      { id:'u-brian', fullName:'Brian Otieno', roles:['member'], trainerId:'u-ka', height:178, weight:84 },
+      { id:'u-achol', fullName:'Achol Deng', roles:['member'], trainerId:KEVIN, height:165, weight:68 },
+      { id:'u-brian', fullName:'Brian Otieno', roles:['member'], trainerId:KEVIN, height:178, weight:84 },
       { id:'u-wanjiru', fullName:'Wanjiru Kamau', roles:['member'], trainerId:'u-bravo', height:160, weight:59 },
-      { id:'u-ka', fullName:'Coach KA', roles:['trainer'] },
+      // Kevin Aol is Coach KA (owns Coach KA's Diet). Account only — his
+      // questionnaire/plan come from the gym app via importMember().
+      { id:KEVIN, fullName:'Kevin Aol', roles:['member','trainer','admin'], trainerId:KEVIN },
       { id:'u-bravo', fullName:'Coach Bravo', roles:['trainer'] },
       { id:'u-admin', fullName:'Admin', roles:['admin'] }
     ],
@@ -26,6 +29,8 @@
     checkins: [],      // { id, member_id, weight_kg, energy, hunger, digestion, ease, notes, created_at }
     goals: {},         // memberId -> { target_calories, target_protein_g, target_carbs_g, target_fat_g }
     ai: {},            // memberId -> { plan, model, created_at } — sandbox-only: the AI suggestion page
+    trials: {},        // memberId -> { diet_id, diet_name, variant, variant_label, started_at } — "try a diet"
+    dietEdits: {},     // dietId -> the author's saved edits (replace the file's version field by field)
     notifications: []  // { id, user_id, message, link, read, created_at }
   };
 
@@ -38,6 +43,18 @@
   }
   let db = load();
   if (!db.ai) db.ai = {}; // data saved before the AI page existed
+  if (!db.trials) db.trials = {}; // ...or before diets existed
+  if (!db.dietEdits) db.dietEdits = {};
+  // Saved data from before the demo "Coach KA" account was merged into
+  // Kevin Aol (who is Coach KA): hand everything it had to Kevin.
+  if (db.users.some(u=> u.id === 'u-ka')){
+    if (!db.users.some(u=> u.id === KEVIN)) db.users.push({ id:KEVIN, fullName:'Kevin Aol', roles:['member','trainer','admin'], trainerId:KEVIN });
+    db.users = db.users.filter(u=> u.id !== 'u-ka');
+    db.users.forEach(u=>{ if (u.trainerId === 'u-ka') u.trainerId = KEVIN; });
+    Object.values(db.plans).forEach(p=>{ if (p.coach_id === 'u-ka') p.coach_id = KEVIN; });
+    db.notifications.forEach(n=>{ if (n.user_id === 'u-ka') n.user_id = KEVIN; });
+    try { localStorage.setItem(KEY, JSON.stringify(db)); } catch(e){}
+  }
   function save(){
     try { localStorage.setItem(KEY, JSON.stringify(db)); } catch(e){ /* storage unavailable — keep in memory */ }
   }
@@ -45,7 +62,10 @@
   function now(){ return new Date().toISOString(); }
 
   let currentUserId = (function(){
-    try { return localStorage.getItem(KEY + '-viewer') || 'u-achol'; } catch(e){ return 'u-achol'; }
+    try {
+      const v = localStorage.getItem(KEY + '-viewer') || 'u-achol';
+      return v === 'u-ka' ? KEVIN : v;
+    } catch(e){ return 'u-achol'; }
   })();
 
   function user(id){ return db.users.find(u=>u.id===id) || null; }
@@ -112,7 +132,9 @@
     },
     addCheckin(row){
       const m = me(); assert(m && m.roles.includes('member'), 'Only members send check-ins.');
-      db.checkins.push(Object.assign({ id: uid(), member_id: m.id, created_at: now() }, row));
+      const trial = db.trials[m.id];
+      db.checkins.push(Object.assign({ id: uid(), member_id: m.id, created_at: now(),
+        diet: trial ? trial.diet_name + (trial.variant_label ? ' — ' + trial.variant_label : '') : null }, row));
       notifyStaffOf(m.id, 'sent a meal plan check-in.');
       save();
     },
@@ -132,6 +154,37 @@
       assert(canSee(memberId), 'You can\u2019t generate a suggestion for this member.');
       db.ai[memberId] = { plan: result.plan, model: result.model, created_at: now() };
       save();
+    },
+
+    // Trying a diet: one at a time per member. Starting or switching
+    // tells their coach (or the admins), same routing as check-ins.
+    getTrial(memberId){ return canSee(memberId) ? (db.trials[memberId] || null) : null; },
+    startTrial(diet, variant){
+      const m = me(); assert(m && m.roles.includes('member'), 'Only members can try a diet.');
+      const prev = db.trials[m.id];
+      db.trials[m.id] = { diet_id: diet.id, diet_name: diet.name, variant: variant ? variant.id : null,
+        variant_label: variant ? variant.label : null, started_at: (prev && prev.diet_id === diet.id) ? prev.started_at : now() };
+      notifyStaffOf(m.id, (prev && prev.diet_id === diet.id ? 'switched to ' : 'started trying ') + diet.name + (variant ? ' (' + variant.label + ')' : '') + '.');
+      save();
+    },
+    stopTrial(){
+      const m = me(); if (!m || !db.trials[m.id]) return;
+      const name = db.trials[m.id].diet_name;
+      delete db.trials[m.id];
+      notifyStaffOf(m.id, 'stopped trying ' + name + '.');
+      save();
+    },
+
+    // Diet edits: only the diet's author may save or reset them.
+    getDietEdits(dietId){ return db.dietEdits[dietId] || null; },
+    saveDietEdits(diet, edits){
+      const v = me(); assert(v && v.id === diet.ownerId, 'Only ' + diet.author + ' can edit this diet.');
+      db.dietEdits[diet.id] = Object.assign({}, edits, { updated_at: now() });
+      save();
+    },
+    clearDietEdits(diet){
+      const v = me(); assert(v && v.id === diet.ownerId, 'Only ' + diet.author + ' can edit this diet.');
+      delete db.dietEdits[diet.id]; save();
     },
 
     // Copies one member's records from the gym app (Supabase rows) into

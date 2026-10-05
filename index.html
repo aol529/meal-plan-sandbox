@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Meal Plan Sandbox</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">Meal Plan <span>Sandbox</span></div>
+  <div class="topbar-controls">
+    <label class="viewer">View as
+      <select id="viewer-select" aria-label="View as"></select>
+    </label>
+    <div class="bell" id="bell">
+      <button type="button" id="bell-btn" aria-label="Notifications" aria-expanded="false">🔔<span class="bell-count" id="bell-count" hidden></span></button>
+      <div class="bell-list" id="bell-list" hidden></div>
+    </div>
+    <button type="button" class="btn2" id="reset-btn" title="Wipe everything back to the demo data">Reset demo</button>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="admin-notice sandbox-note">Sandbox copy of the gym app's Meal Plan feature. Data is saved in this browser only (localStorage), not the gym database — try anything. Switch between member and coach with <b>View as</b>.</div>
+
+  <section id="member-view" hidden>
+    <div id="mealplan-body"></div>
+  </section>
+
+  <section id="coach-view" hidden>
+    <div class="day-head"><h2>Meal Plans</h2></div>
+    <div class="admin-notice">Questionnaires, plans and check-ins for your own clients (members whose coach is you). Health answers are private — only the member, their coach, and admins can see them.</div>
+    <div id="coach-mealplans-body"></div>
+  </section>
+</main>
+
+<div class="toast" id="t-toast" role="status" aria-live="polite"></div>
+
+<script src="js/store.js"></script>
+<script src="js/mealplan.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+{
+  "name": "meal-plan-sandbox",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Standalone sandbox of the Bells n Barz Meal Plan feature (localStorage, no backend)",
+  "scripts": {
+    "start": "node server.js"
+  }
+}

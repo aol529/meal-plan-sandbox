@@ -225,7 +225,7 @@
       }
       html += '</div>';
     });
-    return html || '<div class="empty-msg">Your coach hasn’t added anything to the plan yet.</div>';
+    return html ? '<div class="mp-plan-grid">' + html + '</div>' : '<div class="empty-msg">Your coach hasn’t added anything to the plan yet.</div>';
   }
 
   function targetsHtml(goals, forCoach){
@@ -381,11 +381,12 @@
     }
     const p = ai.plan;
     html += '<div class="day-focus">AI suggestion · generated ' + fmtDate(ai.created_at) + '</div>';
+    if (forCoach) html += '<div class="mp-actions mp-ai-top-actions"><button type="button" class="btn2 primary" data-ai-copy>Copy into my plan</button></div>';
     if (p.referral_note) html += '<div class="admin-notice mp-refer">' + esc(p.referral_note) + '</div>';
     html += '<div class="mp-sub-head">Daily targets</div>' + targetsHtml(p.targets, forCoach) +
       planViewHtml({ content: aiToContent(p) });
     if (p.rationale) html += '<div class="mp-plan-block mp-rationale"><h4>How the AI got here</h4><p>' + esc(p.rationale) + '</p></div>';
-    html += '<div class="mp-actions">' + genBtn + (forCoach ? '<button type="button" class="btn2 primary" data-ai-copy>Copy into my plan</button>' : '') + '</div>';
+    html += '<div class="mp-actions">' + genBtn + '</div>';
     return html;
   }
 
@@ -685,9 +686,9 @@
       if (draft) html += '<div class="admin-notice mp-ai-note">Pre-filled from the AI suggestion — <b>not saved yet</b>. Edit anything, then send it. <button type="button" class="btn2" id="mp-discard-draft">Discard draft</button></div>';
       html += '<form class="mp-form" id="mp-plan-form">' +
         '<div class="mp-sub-head" style="margin-top:0;">Daily targets</div>' + targetsEditorHtml(draft ? draft.targets : d.goals) +
-        PLAN_FIELDS.map(f=> '<div class="mp-q"><label class="mp-q-label" for="mp-p-' + f.id + '">' + esc(f.label) + '</label>' +
+        '<div class="mp-editor-grid">' + PLAN_FIELDS.map(f=> '<div class="mp-q' + (f.id === 'pattern' ? ' mp-wide' : '') + '"><label class="mp-q-label" for="mp-p-' + f.id + '">' + esc(f.label) + '</label>' +
           '<div class="field-hint mp-q-hint">' + esc(f.hint) + '</div>' +
-          '<textarea class="mp-input" id="mp-p-' + f.id + '" name="' + f.id + '" rows="' + f.rows + '">' + esc(c[f.id]) + '</textarea></div>').join('') +
+          '<textarea class="mp-input" id="mp-p-' + f.id + '" name="' + f.id + '" rows="' + f.rows + '">' + esc(c[f.id]) + '</textarea></div>').join('') + '</div>' +
         '<div class="mp-actions"><button type="submit" class="btn2 primary">' + (d.plan ? 'Save & notify member' : 'Send plan to member') + '</button>' +
         (d.plan ? '<span class="field-hint">Last saved ' + fmtDate(d.plan.updated_at) + '</span>' : '') + '</div></form>';
     }

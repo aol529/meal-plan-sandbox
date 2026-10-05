@@ -192,3 +192,36 @@ button, input, select, textarea{font:inherit;}
 .ka-review-inline{display:inline; padding:1px 6px; margin:0;}
 .ka-table td{font-size:13px;}
 .ka-small{font-size:13px !important; color:var(--muted); margin-top:8px;}
+
+/* ---------- Coach view: less scrolling (wide screens only) ----------
+   Two columns for the long tabs, and the client list + tab row stay in
+   view so switching tabs never needs a scroll back up. Phones keep the
+   single column. */
+@media (min-width:900px){
+  #coach-view .mp-coach-layout{grid-template-columns:220px 1fr;}
+  #coach-view .mp-client-list{position:sticky; top:72px;}
+  #coach-view .mp-coach-tabs{position:sticky; top:61px; z-index:5; background:var(--bg); padding:10px 0; margin:0 0 14px; border-bottom:1px solid var(--line-soft);}
+  #coach-view .mp-answers{columns:2; column-gap:28px;}
+  #coach-view .mp-answers .mp-a, #coach-view .mp-answers .mp-day-table{break-inside:avoid;}
+  #coach-view .mp-answers .mp-section-head{break-after:avoid; margin-top:0; padding-top:12px; border-top:none;}
+  #coach-view .mp-answers .mp-a{margin-bottom:9px;}
+  #coach-view .mp-plan-grid{columns:2; column-gap:12px;}
+  #coach-view .mp-plan-grid .mp-plan-block{margin:0 0 12px; break-inside:avoid;}
+  #coach-view .mp-ai-top-actions{margin:0 0 14px;}
+  #coach-view .mp-editor-grid{display:grid; grid-template-columns:1fr 1fr; gap:0 16px;}
+  #coach-view .mp-editor-grid .mp-wide{grid-column:1 / -1;}
+  #coach-view .mp-form{max-width:none;}
+  #coach-view .mp-q{margin-bottom:12px;}
+  #coach-view .mp-sub-head{margin:16px 0 10px;}
+  #coach-view .day-focus{margin-bottom:16px; padding-bottom:12px;}
+}
+@media (min-width:900px){
+  #coach-view .day-head h2{font-size:26px;}
+  #coach-view > .admin-notice{margin-bottom:14px; padding:8px 12px;}
+  #coach-view .mp-plan-block{padding:10px 12px;}
+  #coach-view .mp-plan-block h4{margin-bottom:5px;}
+  #coach-view .mp-plan-block li, #coach-view .mp-plan-block p, #coach-view .mp-grocery div{font-size:13.5px; line-height:1.45;}
+  #coach-view .mp-plan-block li{margin:1px 0;}
+  #coach-view .mp-targets > div{padding:8px;}
+  #coach-view .mp-ai-note{padding:8px 12px; margin-bottom:12px;}
+}

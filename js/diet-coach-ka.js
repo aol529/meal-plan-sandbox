@@ -24,19 +24,19 @@
   const REFERENCE = [
     {
       "title": "Coach KA’s 7 rules",
-      "body": "### Rule #1 — Water first\nAfter a good night’s sleep (6+ hours), always drink water first thing in the morning — before your shower, before tea or food. You’ve gone all night without any, and starting the day hydrated supports healthy blood pressure, energy and digestion.\n\nThrough the day, aim for about **30–35 ml of water per kg of bodyweight** — roughly 2.5–3 litres at 80 kg — and more when you train or it’s hot. Water keeps you fuller between meals, which makes it easier to stick to your plan.\n\nHave kidney or heart problems, or been told to limit fluids? Follow your doctor’s advice instead.\n\n### Rule #2 — Fruit is food\nFor real, ask the silverback gorilla.\n\nA later first meal — around 10:00 am — suits a lot of people: it gives your body a longer overnight break before you eat again. If you train in the morning or feel shaky without breakfast, eat earlier; what matters most is what you eat, not the clock.\n\nYour breakfast should be fruit, fruit salad, or at least start with a fruit. Fruit gives you fibre, vitamins and antioxidants, and its natural sugar comes packaged with fibre and water — steadier energy than any energy drink.\n\nWater comes first, and whole fruit beats juice: juice loses most of the fibre and is easy to over-drink. If you want something blended, make it a smoothie, which keeps the whole fruit:\n1. Add a vegetable of your choice to a blender, like bok choy (found at Chandarana Foodplus stores).\n2. Pick either dry or juicy fruit — e.g. pineapple and papaya, or banana and mango.\n3. Add nuts and/or seeds: almonds, chia, flax, pumpkin, sesame seeds, peanuts, groundnuts.\n4. Boost with turmeric and ginger.\n5. Add plant-based milk.\n\n### Rule #3 — It’s not Breakfast, it is Break Fast\nOnce your last meal has been digested your stomach is empty, and from then until you next eat, you are fasting — every night, for everyone. Your first meal is what breaks that fast.\n\nBreak it with something light and easy on an empty stomach that also rehydrates you — a smoothie, porridge, soup, or tea alongside some fruit. Porridge, soup or a smoothie with nuts or seeds beats juice alone, because they bring some protein and fibre to carry you to your next meal.\n\n### Rule #4 — If you want to be as strong as a bull, don’t eat the bull, eat what the bull eats\nRaw nuts, seeds, grains, berries, vegetables. These could best escort the drink that breaks your fast. Most, if not all, of your dietary needs could be met in your first meal of the day.\n\n### Rule #5 — Cooking does not require killing: eat plant-first\nBuild most of what you eat from plants — fruit, vegetables, grains, beans, lentils, nuts and seeds. Keep meat, fish, eggs and dairy mostly to your main meal of the day (your main meal in Options A–C), rather than spreading them through every meal.\n\nPlant proteins count too: beans, lentils, ndengu, chickpeas, groundnuts and soy can stand in for meat on any day.\n\n### Rule #6 — Avoid CRAP, most of the time\nCarbonated, Refined, Artificial and Processed. Build your days on whole foods; the one small planned treat in Options B and C is the exception that keeps the plan livable — not a licence for more.\n\n### Rule #7 — Good health starts in the gut\nLook after your gut and it looks after you. Feed it fibre — fruit, vegetables, beans, lentils and whole grains (Rules 2, 4 and 5) — and fermented foods like mala or plain yoghurt, and go easy on the processed stuff (Rule 6)."
+      "body": "### Rule #1 — Water first\nAfter a good night’s sleep (6+ hours), always drink water first thing in the morning — before your shower, before tea or food. You’ve gone all night without any, and starting the day hydrated supports healthy blood pressure, energy and digestion.\n\nThrough the day, aim for about **30–35 ml of water per kg of bodyweight** — roughly 2.5–3 litres at 80 kg — and more when you train or it’s hot. Water keeps you fuller between meals, which makes it easier to stick to your plan.\n\nHave kidney or heart problems, or been told to limit fluids? Follow your doctor’s advice instead.\n\n### Rule #2 — Fruit is food\nFor real, ask the silverback gorilla.\n\nStart your day’s eating with fruit — fruit salad, or at least a piece of fruit — and have a protein with it (eggs, mala, groundnuts) so it carries you to your next meal. Fruit gives you fibre, vitamins and antioxidants, and its natural sugar comes packaged with fibre and water — steadier energy than any energy drink.\n\nWater comes first, and whole fruit beats juice: juice loses most of the fibre and is easy to over-drink. If you want something blended, make it a smoothie, which keeps the whole fruit:\n1. Add a vegetable of your choice to a blender, like bok choy (found at Chandarana Foodplus stores).\n2. Pick either dry or juicy fruit — e.g. pineapple and papaya, or banana and mango.\n3. Add nuts and/or seeds: almonds, chia, flax, pumpkin, sesame seeds, peanuts, groundnuts.\n4. Boost with turmeric and ginger.\n5. Add plant-based milk.\n\n### Rule #3 — It’s not Breakfast, it is Break Fast\nOnce your last meal has been digested your stomach is empty, and from then until you next eat, you are fasting — every night, for everyone. Your first meal is what breaks that fast.\n\nBreak it with something light and easy on an empty stomach that also rehydrates you — a smoothie, porridge, soup, or tea alongside some fruit. Porridge, soup or a smoothie with nuts or seeds beats juice alone, because they bring some protein and fibre to carry you to your next meal.\n\n### Rule #4 — If you want to be as strong as a bull, don’t eat the bull, eat what the bull eats\nNuts, seeds, whole grains, beans, fruit and vegetables. Build every meal around these foods — then add your protein (eggs, mala, fish or meat at the main meal) to round it out.\n\n### Rule #5 — Cooking does not require killing: eat plant-first\nBuild most of what you eat from plants — fruit, vegetables, grains, beans, lentils, nuts and seeds. Keep meat, fish, eggs and dairy mostly to your main meal of the day (your main meal in Options A–C), rather than spreading them through every meal.\n\nPlant proteins count too: beans, lentils, ndengu, chickpeas, groundnuts and soy can stand in for meat on any day.\n\n### Rule #6 — Avoid CRAP, most of the time\nCarbonated, Refined, Artificial and Processed. Build your days on whole foods; the one small planned treat in Options B and C is the exception that keeps the plan livable — not a licence for more.\n\n**Go easy on salt, too** — it raises blood pressure. Use iodized salt in cooking, taste before you add more, and limit stock cubes, soy sauce and salty snacks like crisps. Aim for under about a teaspoon of salt a day, all in.\n\n### Rule #7 — Good health starts in the gut\nLook after your gut and it looks after you. Feed it fibre — fruit, vegetables, beans, lentils and whole grains (Rules 2, 4 and 5) — and fermented foods like mala or plain yoghurt, and go easy on the processed stuff (Rule 6)."
     },
     {
       "title": "The power of \"anti\": protective properties in food",
-      "body": "Nutrition is more than macronutrients and calories — food is rich in natural compounds that may help the body resist inflammation, oxidation, infection and metabolic damage. Many have \"anti-\" properties.\n\nThese are reasons to eat more of these foods as part of a varied diet — not cures. Most effects were measured in lab or supplement-dose studies, so everyday amounts help gently over time.\n\n| Anti- property | May help… | Examples |\n| Anti-inflammatory | Calm inflammation | Turmeric, ginger, omega-3s |\n| Antioxidant | Protect cells from oxidative stress | Berries, green tea, vitamin C |\n| Antibacterial | Fight harmful bacteria | Garlic, honey, oregano oil |\n| Antiviral | Support defence against viruses | Elderberry, green tea, zinc |\n| Antifungal | Limit fungal growth | Coconut oil, garlic |\n| Antihypertensive | Support healthy blood pressure | Beets, garlic, potassium |\n| Antithrombotic | Support healthy blood flow | Omega-3s, turmeric |\n| Antiatherogenic | Protect arteries from plaque | Fibre, olive oil |\n| Antilipidemic | Lower cholesterol/triglycerides | Oats, nuts, plant sterols |\n| Antiobesogenic | Support a healthy weight | Green tea, vinegar, fibre |\n| Antiglycation | Reduce AGE-related ageing damage | Cinnamon, polyphenols |\n| Antispasmodic | Ease cramps/spasms | Peppermint, magnesium |\n| Antiemetic | Ease nausea | Ginger, vitamin B6 |\n| Antiallergic | Ease allergic reactions | Quercetin, vitamin C |\n| Antiulcerogenic | Protect the stomach lining | Cabbage juice, licorice |\n| Antinociceptive | Ease pain | Turmeric, capsaicin |\n\n> **Supplements are different from food.** Ashwagandha, licorice root, quercetin, elderberry and other concentrated supplements can interact with medication (including blood-pressure and blood-thinning drugs) and aren’t advised in pregnancy. Check with a doctor or pharmacist before taking them — the foods themselves are fine in normal amounts."
+      "body": "Nutrition is more than macronutrients and calories — food is rich in natural compounds that may help the body resist inflammation, oxidation, infection and metabolic damage. Many have \"anti-\" properties.\n\nThese are reasons to eat more of these foods as part of a varied diet — not cures. Most effects were measured in lab or supplement-dose studies, so everyday amounts help gently over time.\n\n| Anti- property | May help… | Examples |\n| Anti-inflammatory | Calm inflammation | Turmeric, ginger, omega-3s |\n| Antioxidant | Protect cells from oxidative stress | Berries, green tea, vitamin C |\n| Antibacterial | Fight harmful bacteria | Garlic, honey, ginger |\n| Antiviral | Support defence against viruses | Green tea, garlic, zinc-rich beans and pumpkin seeds |\n| Antifungal | Limit fungal growth | Coconut oil, garlic |\n| Antihypertensive | Support healthy blood pressure | Beets, garlic, potassium |\n| Antithrombotic | Support healthy blood flow | Omega-3s, turmeric |\n| Antiatherogenic | Protect arteries from plaque | Fibre, olive oil |\n| Antilipidemic | Lower cholesterol/triglycerides | Oats, nuts, plant sterols |\n| Antiobesogenic | Support a healthy weight | Green tea, vinegar, fibre |\n| Antiglycation | Reduce AGE-related ageing damage | Cinnamon, polyphenols |\n| Antispasmodic | Ease cramps/spasms | Peppermint, magnesium |\n| Antiemetic | Ease nausea | Ginger, vitamin B6 |\n| Antiallergic | Ease allergic reactions | Quercetin, vitamin C |\n| Antiulcerogenic | Protect the stomach lining | Cabbage, bananas, plain yoghurt |\n| Antinociceptive | Ease pain | Turmeric, capsaicin |\n\n> **Supplements are different from food.** Concentrated supplements — e.g. turmeric or curcumin capsules, ashwagandha, licorice root, quercetin, elderberry can interact with medication (including blood-pressure and blood-thinning drugs) and aren’t advised in pregnancy. Check with a doctor or pharmacist before taking them — the foods themselves are fine in normal amounts."
     },
     {
       "title": "Bedtime anti-inflammatory tea",
-      "body": "| Ingredient | Key benefits |\n| Turmeric | Anti-inflammatory, antioxidant, liver support, may promote better sleep |\n| Black pepper | Enhances absorption of curcumin (from turmeric), aids digestion |\n| Ginger | Anti-nausea, anti-inflammatory, promotes digestion, warms the body |\n| Lemon | Vitamin C, aids digestion, boosts immunity |\n| Cloves | Antibacterial, anti-inflammatory, aids digestion, may reduce oral bacteria |\n\n### Why before bed\n- May help calm inflammation overnight\n- Supports digestion and may reduce bloating or gas\n- Can support your immune defences\n- Warms the body, helping you relax\n- May support steadier blood sugar\n- Adds antioxidants during your body’s overnight repair\n\n### Recipe (single serving)\n- ½ tsp turmeric powder (or 1-inch fresh root)\n- A pinch (⅛ tsp) of black pepper\n- 1-inch fresh ginger, sliced, or ½ tsp powder\n- 2 cloves\n- ½ lemon, squeezed\n- 1.5–2 cups water\n- Optional: ½ tsp raw honey, added after steeping — not during boiling\n\n1. Bring the water to a boil.\n2. Add turmeric, ginger, cloves and black pepper.\n3. Simmer on low heat for 10 minutes.\n4. Turn off the heat; add the lemon juice and optional honey.\n5. Strain and sip slowly, 30–60 minutes before bed.\n\n**Best time:** 30–60 minutes before bed, or during the post-dinner wind-down. Not right before lying down, to avoid reflux or waking up to pee.\n\n**Variations:** add cinnamon; a splash of coconut or almond milk for a \"golden milk\" style drink; leave out honey (or keep it under ½ tsp) if fasting; swap cloves for cardamom or star anise sometimes.\n\n> **Cautions** — heartburn or reflux (lemon, ginger) in sensitive people; cloves, turmeric and ginger all mildly thin the blood, so **be careful if on blood-thinning medication**; ginger and pepper can be stimulating in excess; too much pepper or turmeric can upset an empty stomach; lemon and ginger can make you urinate more."
+      "body": "| Ingredient | Key benefits |\n| Turmeric | Traditionally used to calm inflammation; a source of antioxidants |\n| Black pepper | Enhances absorption of curcumin (from turmeric), aids digestion |\n| Ginger | Anti-nausea, anti-inflammatory, promotes digestion, warms the body |\n| Lemon | Vitamin C and flavour; traditionally used for digestion |\n| Cloves | Antibacterial, anti-inflammatory, aids digestion, may reduce oral bacteria |\n\n### Why before bed\n- May help calm inflammation overnight\n- Supports digestion and may reduce bloating or gas\n- Can support your immune defences\n- Warms the body, helping you relax\n- May support steadier blood sugar\n- Adds antioxidants during your body’s overnight repair\n\n### Recipe (single serving)\n- ½ tsp turmeric powder (or 1-inch fresh root)\n- A pinch (⅛ tsp) of black pepper\n- 1-inch fresh ginger, sliced, or ½ tsp powder\n- 2 cloves\n- ½ lemon, squeezed\n- 1.5–2 cups water\n- Optional: ½ tsp raw honey, added after steeping — not during boiling\n\n1. Bring the water to a boil.\n2. Add turmeric, ginger, cloves and black pepper.\n3. Simmer on low heat for 10 minutes.\n4. Turn off the heat; add the lemon juice and optional honey.\n5. Strain and sip slowly, 30–60 minutes before bed.\n\n**Best time:** 30–60 minutes before bed, or during the post-dinner wind-down. Not right before lying down, to avoid reflux or waking up to pee.\n\n**Variations:** add cinnamon; a splash of coconut or almond milk for a \"golden milk\" style drink; leave out honey (or keep it under ½ tsp) if fasting; swap cloves for cardamom or star anise sometimes.\n\n> **Cautions** — heartburn or reflux (lemon, ginger) in sensitive people; cloves, turmeric and ginger all mildly thin the blood, so **be careful if on blood-thinning medication**; ginger and pepper can be stimulating in excess; too much pepper or turmeric can upset an empty stomach; lemon and ginger can make you urinate more."
     },
     {
       "title": "What to eat — food lists",
-      "body": "| Group | Foods |\n| Fruits | Bananas, apples, pears, peaches, mangoes, lemons, limes, papaya, soursop, passion fruit, avocado |\n| Vegetables | Spinach, kale, lettuce, cucumber, cauliflower, broccoli, tomato, celery, cabbage, bell peppers, onions, okra, mushrooms, cayenne pepper |\n| Whole grains | Oats, millet, brown rice, basmati/pishori rice, maize |\n| Nuts | Almonds, cashews, peanuts, hazelnuts, pistachios, walnuts, macadamia |\n| Dried fruit | Dates, raisins, figs, apricots, prunes |\n| Roots | Irish potatoes, sweet potatoes, yam, cassava, carrots |\n| Legumes | Kidney, garbanzo, black and black-eyed beans; red and green lentils; chickpeas, green peas |\n| Seeds | Sesame, pumpkin, chia, flax, sunflower |\n| Plant-based milk | Soy, coconut, almond, cashew, oat |\n| Salad oils | Olive, coconut, avocado, sesame |\n| Salt | Himalayan, sea, iodized, pink |\n| Herbs & spices | Parsley, cilantro, paprika, coriander, cinnamon |\n| Sweeteners | Stevia, jaggery, honey |"
+      "body": "| Group | Foods |\n| Fruits | Bananas, apples, pears, peaches, mangoes, lemons, limes, papaya, soursop, passion fruit, avocado |\n| Vegetables | Spinach, kale, lettuce, cucumber, cauliflower, broccoli, tomato, celery, cabbage, bell peppers, onions, okra, mushrooms, cayenne pepper |\n| Whole grains | Oats, millet, sorghum, brown rice, whole-maize flour (unga wa dona), whole-wheat flour for chapati — pick these over white rice, sifted maize flour and white flour |\n| Nuts | Almonds, cashews, peanuts, hazelnuts, pistachios, walnuts, macadamia |\n| Dried fruit | Dates, raisins, figs, apricots, prunes |\n| Roots | Irish potatoes, sweet potatoes, yam, cassava, carrots |\n| Legumes | Kidney, garbanzo, black and black-eyed beans; red and green lentils; chickpeas, green peas |\n| Seeds | Sesame, pumpkin, chia, flax, sunflower |\n| Plant-based milk | Soy, coconut, almond, cashew, oat |\n| Salad oils | Olive, coconut, avocado, sesame |\n| Salt | Himalayan, sea, iodized, pink |\n| Herbs & spices | Parsley, cilantro, paprika, coriander, cinnamon |\n| Sweeteners | Stevia, jaggery, honey |"
     },
     {
       "title": "Nutrients to watch on a plant-first diet",
@@ -44,7 +44,7 @@
     },
     {
       "title": "Calorie counting guide for muscle gain",
-      "body": "1. **Understanding calories** — a calorie is a unit of energy; calories in food are how much energy your body gets from what you eat and drink.\n2. **Why count?** To gain muscle, eat in a surplus (more than you burn). To lose fat, eat in a deficit. To maintain, eat what you burn.\n3. **How** — track everything you eat and drink, use an app (e.g. MyFitnessPal, Cronometer), and use a food scale for accuracy.\n4. **Calories per gram** — protein 4, carbohydrate 4, fat 9, alcohol 7.\n\n{{your-numbers}}\n\n### Sample week — 2 large meals a day (~1,600–1,700 kcal each), plus an optional shake or snack\nPlant-first, like the rest of this diet: beans, ndengu, eggs, mala and groundnuts carry most of the protein, and meat or fish sits in the main meal. Prefer Coach KA's daily rhythm? Split Meal 1 across Option C's morning, mid-morning and lunch slots.\n\n| Day | Meal 1 (plant-first) | Meal 2 (main meal) |\n| 1 | Githeri (2 cups), 3 boiled eggs, avocado, 500 ml mala | Chicken (200 g), rice (2 cups), sukuma wiki, groundnut sauce |\n| 2 | Ndengu stew with 2 chapatis; yoghurt with oats and banana | Whole tilapia, ugali, cabbage, kachumbari |\n| 3 | Beans and rice (2 cups), 3 eggs, avocado, a glass of milk | Beef stew (150 g), matoke, spinach |\n| 4 | Oat porridge made with milk, peanut butter and banana; 3 eggs | Bean or chickpea curry, brown rice, omena (150 g), greens |\n| 5 | Lentil stew with 2 chapatis, mala, a handful of groundnuts | Chicken thighs (200 g), sweet potatoes, mixed vegetables |\n| 6 | Githeri with 2 eggs and avocado; plain yoghurt | Fish curry, rice with peas, kachumbari |\n| 7 | 3 eggs, sweet potatoes, beans, a glass of milk | Ndengu and beef (100 g) stew, ugali, sukuma wiki, yoghurt |\n\n**Optional shake:** milk or soy milk + banana + peanut butter or groundnuts (add a scoop of whey if you use it — food first).\n\n### Tips for success\n- Track all food daily with an app.\n- Use a kitchen scale.\n- Meal-prep to stay consistent.\n- Weigh yourself weekly — aim for 0.25–0.5 kg gain a week.\n- Adjust intake if your weight stalls for 2–3 weeks.\n\n### Bulking on a budget\nFood over supplements — build on cheap staples. Carbs: maize flour, rice, oats, potatoes, sweet potatoes, matoke. Protein: beans, ndengu, eggs, omena, mala, groundnuts — plus chicken thighs or minced beef at the main meal. Fats: groundnuts, peanut butter, avocado, a little cooking oil, whole milk.\n\n**Example day:** breakfast — oat porridge with milk + peanut butter + banana; lunch — githeri with 2 eggs and avocado; after training — milk + banana + groundnuts; dinner — ugali + beef or beans + sukuma wiki; before bed — a cup of mala or yoghurt."
+      "body": "1. **Understanding calories** — a calorie is a unit of energy; calories in food are how much energy your body gets from what you eat and drink.\n2. **Why count?** To gain muscle, eat in a surplus (more than you burn). To lose fat, eat in a deficit. To maintain, eat what you burn.\n3. **How** — track everything you eat and drink, use an app (e.g. MyFitnessPal, Cronometer), and use a food scale for accuracy.\n4. **Calories per gram** — protein 4, carbohydrate 4, fat 9, alcohol 7.\n\n{{your-numbers}}\n\n### Sample week — 4 eating times, like Option C, plus your one small treat\nPlant-first: beans, ndengu, eggs, mala and groundnuts carry most of the protein, and meat or fish sits in the main meal. For your own amounts, see **How much to eat** on Option B or C.\n\n| Day | 6–8 am | 10–11 am | Lunch | Main meal |\n| 1 | Fruit + 3 eggs | Porridge with milk + peanut butter | Githeri, 2 eggs, avocado | Chicken (200 g), rice, sukuma wiki, groundnut sauce |\n| 2 | Fruit + a cup of mala | Yoghurt with oats and banana | Ndengu stew, 2 chapatis | Whole tilapia, ugali, cabbage, kachumbari |\n| 3 | Fruit + 3 eggs | Porridge with milk + groundnuts | Beans and rice, avocado | Beef stew (150 g), matoke, spinach |\n| 4 | Fruit + a cup of mala | Oat porridge with milk, peanut butter, banana | Bean or chickpea curry, brown rice | Omena (150 g), ugali, greens |\n| 5 | Fruit + 3 eggs | Mala + a handful of groundnuts | Lentil stew, 2 chapatis | Chicken thighs (200 g), sweet potatoes, mixed vegetables |\n| 6 | Fruit + a cup of mala | Yoghurt with oats | Githeri, 2 eggs | Fish curry, rice with peas, kachumbari |\n| 7 | Fruit + 3 eggs | Porridge with milk | Sweet potatoes and beans | Ndengu and beef stew, ugali, sukuma wiki, yoghurt |\n\n**Optional shake:** milk or soy milk + banana + peanut butter or groundnuts (add a scoop of whey if you use it — food first).\n\n### Tips for success\n- Track all food daily with an app.\n- Use a kitchen scale.\n- Meal-prep to stay consistent.\n- Weigh yourself weekly — aim for 0.25–0.5 kg gain a week.\n- Adjust intake if your weight stalls for 2–3 weeks.\n\n### Bulking on a budget\nFood over supplements — build on cheap staples. Carbs: maize flour, rice, oats, potatoes, sweet potatoes, matoke. Protein: beans, ndengu, eggs, omena, mala, groundnuts — plus chicken thighs or minced beef at the main meal. Fats: groundnuts, peanut butter, avocado, a little cooking oil, whole milk.\n\n**Example day:** breakfast — oat porridge with milk + peanut butter + banana; lunch — githeri with 2 eggs and avocado; after training — milk + banana + groundnuts; dinner — ugali + beef or beans + sukuma wiki; before bed — a cup of mala or yoghurt."
     }
   ];
 
@@ -53,8 +53,8 @@
   const FRUIT = ['Whole fruit + a protein†', '6–8 am', 'Coconut pieces', 'Pineapple', 'Watermelon', 'Apple', 'Mango', 'Passion fruit'];
   const TEAS = ['Tea + a protein†', '10–11 am', 'Moringa', 'Lemon', 'Ginger', 'Turmeric', 'Green tea', 'Hibiscus'];
   const DINNER = ['Main meal', '3–7 pm, or with family',
-    'Lean meat · matoke · guacamole', 'Lentils · rice · boiled mixed veggies', 'Chicken breast · baked Irish potatoes · guacamole',
-    'Legumes · sweet potatoes · ratatouille', 'Fish · chips · kachumbari', 'Your choice'];
+    'Lean meat · matoke · sukuma · avocado', 'Lentils · rice · boiled mixed veggies', 'Chicken breast · baked Irish potatoes · cabbage · avocado',
+    'Legumes · sweet potatoes · ratatouille', 'Grilled or stewed fish · roasted potatoes · kachumbari', 'Your choice'];
   // The three weekly options, as plain data so Coach KA can edit them.
   const HEAD = ['', 'Time', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Weekend'];
   const MID_MORNING = ['Tea / porridge / yoghurt / smoothie + a protein†', '10–11 am', 'Moringa', 'Lemon', 'Ginger', 'Turmeric', 'Green tea', 'Hibiscus'];
@@ -76,7 +76,7 @@
     { id: 'C', label: 'Option C — lean gain', forGoals: ['Build muscle', 'Sports performance'],
       intro: 'Gain more slowly than Option B, but more of it as muscle: a planned, protein-rich lunch instead of "anything you fancy", a fuller mid-morning, and one daily treat.',
       week: { head: HEAD, rows: [JUICE, MID_MORNING, TREAT,
-        ['Lunch — protein · carb · veg', '1–2 pm', 'Githeri · 2 eggs · avocado', 'Rice · beans · chicken', 'Chapati · ndengu · sukuma', 'Ugali · beef stew · cabbage', 'Matoke · beans · greens', 'Your choice'],
+        ['Lunch — protein · carb · veg', '1–2 pm', 'Githeri · 2 eggs · greens · avocado', 'Rice · beans · chicken · sukuma', 'Chapati · ndengu · sukuma', 'Ugali · beef stew · cabbage', 'Matoke · beans · greens', 'Your choice'],
         DINNER] },
       footnote: '† Protein at every eating time — 2 boiled eggs, a cup of mala or plain yoghurt, a glass of milk or soy milk, a handful of groundnuts, or a spoon of peanut butter.\n\nFruit and tea by day are just examples — any fruit or herbal tea works. **Weekend:** same rhythm, your choice of foods.' }
   ];
@@ -86,7 +86,7 @@
   // the plan's own timetable, rules and calorie guide. options: which
   // weekly options a step shows for ([] = all).
   const HOW = {
-    lede: 'This diet runs on a daily rhythm: you eat light — mostly liquids, fruit, nuts and seeds — through the morning and early afternoon, and have **one proper main meal — ideally between 3 and 7 pm**, or with your family if you eat later. Every time you eat — not just that meal — include **a protein**: your muscles use it best spread through the day, 3–4 times. Here\u2019s how to make it work.',
+    lede: 'This diet runs on a daily rhythm: you eat light — fruit, eggs, tea, smoothies, nuts and seeds — through the morning and early afternoon, and have **one proper main meal — ideally between 3 and 7 pm**, or with your family if you eat later. Every time you eat — not just that meal — include **a protein**: your muscles use it best spread through the day, 3–4 times. Here\u2019s how to make it work.',
     steps: [
       { title: 'Water, then whole fruit', options: ['A'],
         body: 'Start every day with water (Rule 1), then the day\u2019s fruit between 6 and 8 am — **eaten whole, not juiced** — with a protein alongside: 2 boiled eggs, a cup of mala or yoghurt, or a handful of groundnuts. Whole fruit keeps its fibre, so it fills you up; juice loses it and is easy to over-drink, which works against losing fat. Keep juice to a small glass now and then.' },
@@ -99,15 +99,19 @@
       { title: 'Early afternoon: a protein smoothie', options: ['A'],
         body: 'Between 1 and 2 pm, the same balanced smoothie every day, just rotating the fruit: a handful of greens, the day\u2019s fruit, nuts or seeds, **a protein**, and milk or plant milk (recipe under the week). Trail mix — a small handful of nuts and dried fruit — is only for if you\u2019re hungry between times.' },
       { title: 'Early afternoon: lunch, your way', options: ['B'],
-        body: 'Between 1 and 2 pm, eat anything you fancy — the plan suggests beef, poultry, fish, even pizza across the week, and skipping lunch on Friday. This is what makes Option B the faster way to gain.' },
+        body: 'Between 1 and 2 pm, eat anything you fancy — the plan suggests beef, poultry, fish, even pizza across the week, and skipping lunch on Friday. This is what makes Option B the faster way to gain — just keep vegetables on the plate.' },
       { title: 'Early afternoon: a proper lunch', options: ['C'],
-        body: 'Between 1 and 2 pm, a planned lunch built like your last meal — **a protein, a carb and vegetables**: githeri with eggs, rice with beans and chicken, chapati with ndengu. Gaining muscle needs a surplus and plenty of protein, and two real meals make that reachable. Planned meals rather than "anything you fancy" are what keep the gain leaner than Option B.' },
+        body: 'Between 1 and 2 pm, a planned lunch built like your main meal — **a protein, a carb and vegetables, plus a little fat**: githeri with eggs, rice with beans and chicken, chapati with ndengu. Gaining muscle needs a surplus and plenty of protein, and two real meals make that reachable. Planned meals rather than "anything you fancy" are what keep the gain leaner than Option B.' },
       { title: 'Your main meal: ideally 3–7 pm', options: [],
-        body: 'Your one proper meal, always built the same way: **a protein, a carb, and a fat or vegetable** — e.g. lean meat · matoke · guacamole, lentils · rice · mixed veggies, fish · chips · kachumbari. Swap any part for another from the food lists. Eat plant-first (Rule 5): this is the meal where meat, fish, eggs and dairy belong. Mostly plants? Check **Nutrients to watch** in the background section below.\n\nIf your family eats later, eat with them — sharing the meal matters more than the clock; just keep the same rhythm (light earlier, one proper meal). After your main meal, the kitchen is closed — apart from a post-workout snack on evening training days and the bedtime tea, 30–60 minutes before sleep.' },
+        body: 'Your one proper meal, always built the same way: **a protein, a carb and vegetables — half the plate — plus a little fat** — e.g. lean meat · matoke · sukuma · avocado, lentils · rice · mixed veggies, chicken · potatoes · cabbage. Vegetables aren\u2019t optional: they\u2019re the fibre, vitamins and fullness that make one main meal work.\n\n**Choose whole grains:** brown rice, whole-maize flour (unga wa dona) for ugali, whole-wheat chapati, millet or sorghum — more fibre, steadier energy, longer fullness. **Grill, stew, boil or roast** rather than deep-fry. Swap any part for another from the food lists. Eat plant-first (Rule 5): this is the meal where meat, fish, eggs and dairy belong. Mostly plants? Check **Nutrients to watch** in the background section below.\n\nIf your family eats later, eat with them — sharing the meal matters more than the clock; just keep the same rhythm (light earlier, one proper meal). After your main meal, the kitchen is closed — apart from a post-workout snack on evening training days and the bedtime tea, 30–60 minutes before sleep.' },
       { title: 'Training days', options: [],
         body: 'Fit your eating around your workout so you train with fuel and recover with protein.\n\n**Training in the morning?** Have your morning slot 30–60 minutes before — fruit plus a protein, e.g. a banana with 2 eggs or a cup of mala. Afterwards, a protein snack (milk, yoghurt, groundnuts) before your mid-morning slot.\n\n**Training in the evening?** Have your last meal 1–3 hours before you train. Afterwards, have a small protein snack — a glass of milk, a cup of mala or 2 eggs — even if it\u2019s after 7 pm. Recovery beats the clock.\n\nOn rest days, just follow the timetable.' },
       { title: 'How much to eat', options: ['A'],
-        body: 'Losing fat means eating a little less than you burn — not as little as possible. Here are your own numbers, worked out from your questionnaire:\n\n{{your-fat-loss-numbers}}\n\nDon\u2019t want to count? Use your hand at each meal:\n- **Protein:** a palm-sized portion (two for men)\n- **Carbs:** a cupped handful — about your fist (two for men)\n- **Vegetables:** at least half the plate\n- **Fat:** a thumb-sized amount (oil, avocado, groundnuts)\n\n> **Don\u2019t go lower than about 1,500 kcal a day (men) or 1,200 kcal (women)** without a doctor or dietitian. Eating too little costs you muscle, energy and training — and usually ends in a rebound.' },
+        body: 'Losing fat means eating a little less than you burn — not as little as possible. Here are your own numbers, worked out from your questionnaire:\n\n{{your-fat-loss-numbers}}\n\nThe table shows what that looks like in food. Prefer a simpler rule? Use your hand at each meal:\n- **Protein:** a palm-sized portion (two for men)\n- **Carbs:** a cupped handful — about your fist (two for men)\n- **Vegetables:** at least half the plate\n- **Fat:** a thumb-sized amount (oil, avocado, groundnuts)\n\n> **Don\u2019t go lower than about 1,500 kcal a day (men) or 1,200 kcal (women)** without a doctor or dietitian. Eating too little costs you muscle, energy and training — and usually ends in a rebound.' },
+      { title: 'How much to eat', options: ['B'],
+        body: 'Gaining means eating a bit more than you burn, every day. Here\u2019s your target and what it looks like in food:\n\n{{your-gain-day-b}}' },
+      { title: 'How much to eat', options: ['C'],
+        body: 'Gaining means eating a bit more than you burn, every day. Here\u2019s your target and what it looks like in food:\n\n{{your-gain-day-c}}' },
       { title: 'One small planned treat', options: ['B', 'C'],
         body: 'Gaining options build in one small treat a day — trail mix, a square or two of chocolate, a scoop of ice cream, a bowl of popcorn or a slice of cake. It\u2019s on purpose: gaining is easier with some fun calories, and one planned treat beats random ones. The rest of the day stays whole-food and plant-first (Rules 5 and 6).' },
       { title: 'Track it', options: ['A'],
@@ -150,13 +154,93 @@
     const floor = a.sex === 'Male' ? 1500 : 1200;
     const maint = r50(e.tdee);
     const lo = Math.max(floor, r50(e.tdee - 500)), hi = Math.max(floor, r50(e.tdee - 400));
-    const pLo = Math.round(e.w * 1.6), pHi = Math.round(e.w * 2.2);
+    const pLo = Math.round(e.w * 1.6), pHi = pLo; // ~1.6 g/kg: enough to protect muscle, and reachable with real food
     const fLo = Math.round(lo * 0.25 / 9), fHi = Math.round(hi * 0.30 / 9);
     const cLo = Math.max(0, Math.round((lo - pHi * 4 - fHi * 9) / 4)), cHi = Math.max(0, Math.round((hi - pLo * 4 - fLo * 9) / 4));
     return '<div class="mp-plan-block mp-your-numbers"><h4>Your numbers for losing fat</h4><ul>' +
       '<li>Maintenance (what you burn now): about ' + maint.toLocaleString() + ' kcal/day — ' + e.activity.toLowerCase() + (e.perWeek ? ', training ' + e.perWeek + '×/week' : '') + '</li>' +
       '<li><b>Target: ' + (lo === hi ? lo.toLocaleString() : lo.toLocaleString() + '–' + hi.toLocaleString()) + ' kcal/day</b>' + (lo === floor ? ' (held at the safe minimum — ask your coach before going lower)' : '') + '</li>' +
-      '<li>Protein ' + pLo + '–' + pHi + ' g · fat ' + fLo + '–' + fHi + ' g · carbs ' + cLo + '–' + cHi + ' g</li></ul></div>';
+      '<li>Protein about ' + pLo + ' g (1.6 g per kg) · fat ' + fLo + '–' + fHi + ' g · carbs ' + cLo + '–' + cHi + ' g</li></ul></div>' +
+      portionsHtml(e, 'A', Math.round((lo + hi) / 2), pLo);
+  }
+
+  /* "Your day in portions": turns a member's protein and calorie target
+     into everyday food amounts for one option's timetable. Values are
+     approximate (egg ~6 g protein/75 kcal, palm of meat/fish/chicken
+     ~30 g/220 kcal, cup of mala or glass of milk ~8 g/150 kcal, cup of
+     beans or ndengu ~15 g/230 kcal, fist of carbs ~200 kcal). */
+  const U = {
+    egg: { p: 6, k: 75 }, mala: { p: 8, k: 150 }, pb: { p: 4, k: 95 }, scoop: { p: 24, k: 120 },
+    palm: { p: 30, k: 220 }, beans: { p: 15, k: 230 }, fist: { p: 4, k: 200 }, thumb: { p: 0, k: 45 },
+    fruit: { p: 1, k: 90 }, smoothieBase: { p: 2, k: 110 }, porridge: { p: 5, k: 150 }, veg: { p: 3, k: 60 }, treat: { p: 2, k: 200 }
+  };
+  const clamp = (x, lo, hi) => Math.max(lo, Math.min(hi, x));
+  const plural = (n, one, many) => n + ' ' + (n === 1 ? one : (many || one + 's'));
+  function portionsHtml(e, option, kcal, protein){
+    const A = option === 'A';
+    // Start from a full day, sized to the protein target...
+    const c = {
+      eggs: clamp(Math.round(protein * 0.18 / 6), 2, 4),
+      midMala: A ? clamp(Math.round(protein * 0.12 / 8), 1, 2) : 0,
+      midPb: A ? 0 : 1,
+      smoothiePb: A ? 1 : 0,
+      scoop: 0,
+      lunchPalms: A ? 0 : (e.w >= 80 ? 2 : 1),
+      palms: 1, beans: 0, fists: 0
+    };
+    const totals = () => {
+      let P = U.fruit.p + c.eggs * U.egg.p, K = U.fruit.k + c.eggs * U.egg.k;
+      const add = (u, n) => { P += U[u].p * n; K += U[u].k * n; };
+      if (A){ add('mala', c.midMala); add('smoothieBase', 1); add('mala', 1); add('pb', c.smoothiePb); add('scoop', c.scoop); }
+      else { add('porridge', 1); add('mala', 1); add('pb', c.midPb); add('palm', c.lunchPalms); add('veg', 1); add('treat', 1); }
+      add('palm', c.palms); add('beans', c.beans); add('veg', 1); add('thumb', 1); add('fist', c.fists);
+      return { P, K };
+    };
+    c.palms = clamp(Math.round(Math.max(0, protein - totals().P) * 0.75 / 30) + 1, 1, 3);
+    if (protein - totals().P > 12) c.beans = 1;
+    if (A && protein - totals().P > 12) c.scoop = 1;
+    // ...then carbs to fill the calories (at least one fist per meal)...
+    const meals = A ? 1 : 2;
+    c.fists = clamp(Math.round(Math.max(0, kcal - totals().K) / U.fist.k), meals, meals * 4);
+    // ...and trim extras, in order, if the day still comes out over target
+    // (smaller, less active members), keeping protein near its target.
+    const trims = [
+      () => c.beans && totals().P - U.beans.p >= protein * 0.9 && (c.beans = 0, true),
+      () => c.smoothiePb && (c.smoothiePb = 0, true),
+      () => c.midPb && (c.midPb = 0, true),
+      () => c.eggs > 2 && (c.eggs--, true),
+      () => c.midMala > 1 && (c.midMala--, true),
+      () => c.beans && (c.beans = 0, true)
+    ];
+    for (const t of trims){ if (totals().K <= kcal + 100) break; t(); }
+    // Protein comes first: if trimming left it short, a scoop of protein
+    // powder (or a second cup of mala) adds a lot of protein for few calories.
+    if (A && !c.scoop && totals().P < protein * 0.9) c.scoop = 1;
+    const mainFists = Math.ceil(c.fists / meals), lunchFists = Math.max(1, c.fists - mainFists);
+    const { P, K } = totals();
+    const slots = [
+      ['6–8 am', (A ? 'Whole fruit' : 'Juice or fruit') + ' + ' + plural(c.eggs, 'egg')],
+      ['10–11 am', A ? 'Tea + ' + plural(c.midMala, 'cup') + ' of mala or yoghurt'
+                     : 'Porridge made with a glass of milk' + (c.midPb ? ' + a spoon of peanut butter' : '')],
+      ['1–2 pm', A ? 'Smoothie with greens, fruit and a cup of mala or milk' + (c.smoothiePb ? ' + a spoon of peanut butter' : '') + (c.scoop ? ' + a scoop of protein powder (or a second cup of mala)' : '')
+                   : (option === 'B' ? 'Lunch, your choice — include ' : 'Lunch: ') + plural(c.lunchPalms, 'palm') + ' of protein (meat, fish, chicken or eggs), ' + plural(lunchFists, 'fist') + ' of carbs, vegetables'],
+      ['Main meal', plural(c.palms, 'palm') + ' of protein' + (c.beans ? ' + a cup of beans or ndengu' : '') + ', ' + plural(mainFists, 'fist') + ' of carbs, half the plate vegetables, a thumb of fat']
+    ];
+    if (!A) slots.push(['Any time', 'Your one small treat']);
+    return '<div class="mp-plan-block mp-your-portions"><h4>Your day in portions</h4>' +
+      '<table class="admin-table ka-table">' + slots.map(r=> '<tr><th scope="row">' + esc(r[0]) + '</th><td>' + esc(r[1]) + '</td></tr>').join('') + '</table>' +
+      '<p class="ka-small">Adds up to about <b>' + Math.round(P / 5) * 5 + ' g protein</b> and <b>' + r50(K).toLocaleString() + ' kcal</b> (target: about ' + protein + ' g and ' + r50(kcal).toLocaleString() + ' kcal). Amounts are approximate — your weekly weigh-in tells you whether to adjust.</p></div>';
+  }
+
+  // Options B and C: their own gain target, as a headline + portions.
+  function yourGainDayHtml(a, option){
+    const e = estimate(a);
+    if (!e) return NEED_ANSWERS;
+    const kcal = r50(e.tdee + 250 + (option === 'B' ? 150 : 0));
+    const protein = Math.round(e.w * 1.8);
+    return '<div class="mp-plan-block mp-your-numbers"><h4>Your numbers for gaining</h4><ul>' +
+      '<li>Maintenance: about ' + r50(e.tdee).toLocaleString() + ' kcal/day · <b>target about ' + kcal.toLocaleString() + ' kcal/day</b> (' + (option === 'B' ? 'a bigger surplus — faster gain, some fat' : 'a modest surplus for a leaner gain') + ')</li>' +
+      '<li>Protein about ' + protein + ' g (1.8 g per kg)</li></ul></div>' + portionsHtml(e, option, kcal, protein);
   }
 
   function yourStatsHtml(a){
@@ -166,7 +250,7 @@
     const tdee = e.tdee;
     const tLo = r50(tdee - 100), tHi = r50(tdee + 100);
     const sLo = tHi + 100, sHi = tHi + 200;
-    const pLo = Math.round(w * 2.0), pHi = Math.round(w * 2.2);
+    const pLo = Math.round(w * 1.6), pHi = Math.round(w * 2.0);
     const fLo = Math.round(w * 1.0), fHi = Math.round(w * 1.05);
     const cLo = Math.round((sLo - pHi * 4 - fHi * 9) / 4), cHi = Math.round((sHi - pLo * 4 - fLo * 9) / 4);
     const goals = a.goals || [];
@@ -180,7 +264,7 @@
       '<h4>Your targets for muscle gain</h4>' +
       '<ul><li>TDEE estimate: ' + tLo.toLocaleString() + '–' + tHi.toLocaleString() + ' kcal/day</li>' +
       '<li>Target (surplus): ' + sLo.toLocaleString() + '–' + sHi.toLocaleString() + ' kcal/day</li>' +
-      '<li>Protein 2.0–2.2 g/kg → ' + pLo + '–' + pHi + ' g · Fat ~1 g/kg → ' + fLo + '–' + fHi + ' g · Carbs: the rest → ' + cLo + '–' + cHi + ' g</li>' +
+      '<li>Protein 1.6–2.0 g/kg → ' + pLo + '–' + pHi + ' g · Fat ~1 g/kg → ' + fLo + '–' + fHi + ' g · Carbs: the rest → ' + cLo + '–' + cHi + ' g</li>' +
       '<li><b>Daily example:</b> ' + pMid + ' g protein, ' + fMid + ' g fat, ' + cMid + ' g carbs ≈ ' + cal.toLocaleString() + ' kcal</li></ul>';
   }
 
@@ -191,13 +275,14 @@
     author: 'Coach KA',
     ownerId: OWNER_ID,
     published: true, // Coach KA can also switch this in Coach > My diets
-    summary: 'Light and liquid until mid-afternoon — juice, herbal tea, smoothies, nuts and seeds — then one proper main meal, ideally between 3 and 7 pm. Plant-first, with options to lose weight or gain.',
+    summary: 'Light until mid-afternoon — fruit, eggs, tea, smoothies and nuts, with protein every time you eat — then one proper main meal, ideally between 3 and 7 pm. Plant-first, with options to lose weight or gain.',
     tags: ['Plant-first', 'One main meal', 'Lose weight', 'Gain muscle'],
     variants: VARIANTS,
     weekCaution: WEEK_CAUTION,
     precheck: '**Before you try this diet, talk to your coach first if:**\n- you have diabetes or blood-sugar problems — long gaps and fruit sugar can swing your levels\n- you\u2019re pregnant or breastfeeding\n- you take regular medication\n- you\u2019ve ever had a difficult relationship with food or an eating disorder — an eating rhythm like this isn\u2019t right for everyone\n- you\u2019re under 18',
     how: HOW,
     reference: REFERENCE,
-    tokens: { 'your-numbers': yourStatsHtml, 'your-fat-loss-numbers': yourFatLossHtml }
+    tokens: { 'your-numbers': yourStatsHtml, 'your-fat-loss-numbers': yourFatLossHtml,
+      'your-gain-day-b': (a) => yourGainDayHtml(a, 'B'), 'your-gain-day-c': (a) => yourGainDayHtml(a, 'C') }
   });
 })();

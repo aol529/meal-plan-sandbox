@@ -225,3 +225,21 @@ button, input, select, textarea{font:inherit;}
   #coach-view .mp-targets > div{padding:8px;}
   #coach-view .mp-ai-note{padding:8px 12px; margin-bottom:12px;}
 }
+
+/* ---------- Collapsible AI plan blocks ---------- */
+.mp-fold-bar{display:flex; justify-content:flex-end; margin:4px 0 8px;}
+.mp-fold-bar .btn2{padding:5px 10px; font-size:11px;}
+details.mp-fold{padding:0;}
+details.mp-fold > summary{display:flex; align-items:baseline; gap:12px; padding:10px 14px; cursor:pointer; list-style:none;}
+details.mp-fold > summary::-webkit-details-marker{display:none;}
+details.mp-fold > summary::before{content:"▸"; color:var(--accent); font-size:12px; transition:transform .15s;}
+details.mp-fold[open] > summary::before{transform:rotate(90deg);}
+.mp-fold-title{font-size:13px; color:var(--accent); text-transform:uppercase; letter-spacing:.04em; font-family:'IBM Plex Mono',monospace; white-space:nowrap;}
+.mp-count{display:inline-block; min-width:18px; padding:0 5px; margin-left:4px; border-radius:9px; background:rgba(var(--accent-rgb),.15); color:var(--accent); font-size:11px; text-align:center;}
+.mp-fold-preview{flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--muted); font-size:13px;}
+details.mp-fold[open] .mp-fold-preview{visibility:hidden;}
+details.mp-fold > :not(summary){margin:0 14px 12px 36px;}
+details.mp-fold ul{padding-left:18px;}
+/* Let long one-line previews truncate instead of widening the layout. */
+.mp-client-detail, .mp-plan-grid, details.mp-fold, details.mp-fold > summary{min-width:0;}
+details.mp-fold{overflow:hidden;}

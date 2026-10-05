@@ -204,13 +204,24 @@
 
   function lines(s){ return String(s || '').split('\n').map(x=>x.trim()).filter(Boolean); }
 
-  function planViewHtml(plan){
+  // opts.collapsible: each block becomes a <details>, closed by default,
+  // whose summary shows the title, item count and a one-line preview —
+  // used on the AI page, where the plan is long and is mostly skimmed.
+  function planViewHtml(plan, opts){
+    const collapsible = !!(opts && opts.collapsible);
     const c = plan.content || {};
     let html = '';
     PLAN_FIELDS.forEach(f=>{
       const v = c[f.id];
       if (!v || !String(v).trim()) return;
-      html += '<div class="mp-plan-block"><h4>' + esc(f.label) + '</h4>';
+      if (collapsible){
+        const items = lines(v);
+        const count = (f.list || f.grocery) ? ' <span class="mp-count">' + items.length + '</span>' : '';
+        html += '<details class="mp-plan-block mp-fold"><summary><span class="mp-fold-title">' + esc(f.label) + count + '</span>' +
+          '<span class="mp-fold-preview">' + esc(items[0] || '') + '</span></summary>';
+      } else {
+        html += '<div class="mp-plan-block"><h4>' + esc(f.label) + '</h4>';
+      }
       if (f.list){
         html += '<ul>' + lines(v).map(x=> '<li>' + esc(x) + '</li>').join('') + '</ul>';
       } else if (f.grocery){
@@ -223,7 +234,7 @@
       } else {
         html += '<p>' + esc(v).replace(/\n/g, '<br>') + '</p>';
       }
-      html += '</div>';
+      html += collapsible ? '</details>' : '</div>';
     });
     return html ? '<div class="mp-plan-grid">' + html + '</div>' : '<div class="empty-msg">Your coach hasn’t added anything to the plan yet.</div>';
   }
@@ -384,14 +395,27 @@
     if (forCoach) html += '<div class="mp-actions mp-ai-top-actions"><button type="button" class="btn2 primary" data-ai-copy>Copy into my plan</button></div>';
     if (p.referral_note) html += '<div class="admin-notice mp-refer">' + esc(p.referral_note) + '</div>';
     html += '<div class="mp-sub-head">Daily targets</div>' + targetsHtml(p.targets, forCoach) +
-      planViewHtml({ content: aiToContent(p) });
-    if (p.rationale) html += '<div class="mp-plan-block mp-rationale"><h4>How the AI got here</h4><p>' + esc(p.rationale) + '</p></div>';
+      '<div class="mp-fold-bar"><button type="button" class="btn2" data-fold-all>Expand all</button></div>' +
+      planViewHtml({ content: aiToContent(p) }, { collapsible: true });
+    if (p.rationale) html += '<details class="mp-plan-block mp-fold mp-rationale"><summary><span class="mp-fold-title">How the AI got here</span>' +
+      '<span class="mp-fold-preview">' + esc(p.rationale) + '</span></summary><p>' + esc(p.rationale) + '</p></details>';
     html += '<div class="mp-actions">' + genBtn + '</div>';
     return html;
   }
 
   // Wires the Generate / Copy buttons inside a rendered AI page.
   function wireAi(container, memberId, rerender, onCopy){
+    const foldAll = container.querySelector('[data-fold-all]');
+    if (foldAll){
+      const folds = () => container.querySelectorAll('details.mp-fold');
+      const sync = () => { foldAll.textContent = [...folds()].every(d=> d.open) ? 'Collapse all' : 'Expand all'; };
+      foldAll.addEventListener('click', ()=>{
+        const open = foldAll.textContent === 'Expand all';
+        folds().forEach(d=> d.open = open);
+        sync();
+      });
+      folds().forEach(d=> d.addEventListener('toggle', sync));
+    }
     const gen = container.querySelector('[data-ai-generate]');
     if (gen) gen.addEventListener('click', async ()=>{
       const p = generateAi(memberId);

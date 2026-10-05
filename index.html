@@ -16,6 +16,10 @@
     <label class="viewer">View as
       <select id="viewer-select" aria-label="View as"></select>
     </label>
+    <div class="side-toggle" id="side-toggle" role="group" aria-label="Which side to show" hidden>
+      <button type="button" data-side="member">Member</button>
+      <button type="button" data-side="coach">Coach</button>
+    </div>
     <div class="bell" id="bell">
       <button type="button" id="bell-btn" aria-label="Notifications" aria-expanded="false">🔔<span class="bell-count" id="bell-count" hidden></span></button>
       <div class="bell-list" id="bell-list" hidden></div>
@@ -41,6 +45,8 @@
 <div class="toast" id="t-toast" role="status" aria-live="polite"></div>
 
 <script src="js/store.js"></script>
+<!-- Private, git-ignored draft (owner only). Missing on a fresh clone — the app works without it. -->
+<script src="js/coach-ka-draft.js"></script>
 <script src="js/mealplan.js"></script>
 <script src="js/app.js"></script>
 </body>

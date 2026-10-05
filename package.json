@@ -4,6 +4,9 @@
   "private": true,
   "description": "Standalone sandbox of the Bells n Barz Meal Plan feature (localStorage, no backend)",
   "scripts": {
-    "start": "node server.js"
+    "start": "node --env-file-if-exists=.env server.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.131.0"
   }
 }

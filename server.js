@@ -1,6 +1,7 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const { suggestPlan, Anthropic } = require('./ai');
 
 const ROOT = __dirname;
 const INDEX_FILE = 'index.html';
@@ -22,12 +23,78 @@ const MIME_TYPES = {
   '.map': 'application/json; charset=utf-8'
 };
 
+function aiConfigured(){ return !!(process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_AUTH_TOKEN); }
+
+function sendJson(res, status, body){
+  res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8' });
+  res.end(JSON.stringify(body));
+}
+
+function readJsonBody(req, limit){
+  return new Promise((resolve, reject) => {
+    let size = 0, chunks = [];
+    req.on('data', c => {
+      size += c.length;
+      if (size > limit){ reject(Object.assign(new Error('Request too large.'), { status: 413 })); req.destroy(); return; }
+      chunks.push(c);
+    });
+    req.on('end', () => {
+      try { resolve(JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}')); }
+      catch (e){ reject(Object.assign(new Error('Invalid JSON.'), { status: 400 })); }
+    });
+    req.on('error', reject);
+  });
+}
+
+// Most specific first — keeps retryable failures (rate limits, outages)
+// distinguishable from setup problems (missing/invalid key).
+function aiErrorResponse(err){
+  if (err instanceof Anthropic.AuthenticationError) return [401, 'The Anthropic API key is missing or invalid — see README.md to set it.'];
+  if (err instanceof Anthropic.PermissionDeniedError) return [403, 'This API key isn\u2019t allowed to use ' + 'the model.'];
+  if (err instanceof Anthropic.RateLimitError) return [429, 'Too many AI requests right now — wait a moment and try again.'];
+  if (err instanceof Anthropic.BadRequestError) return [400, 'The AI request was rejected: ' + err.message];
+  if (err instanceof Anthropic.APIConnectionError) return [503, 'Couldn\u2019t reach the Anthropic API — check your internet connection.'];
+  if (err instanceof Anthropic.APIError) return [502, 'The AI service returned an error (' + err.status + '). Try again shortly.'];
+  if (err instanceof Anthropic.AnthropicError) return [500, 'AI is not set up: ' + err.message];
+  return [err.status || 500, err.message || 'Something went wrong.'];
+}
+
+async function handleAiSuggest(req, res){
+  try {
+    const body = await readJsonBody(req, 200 * 1024);
+    if (!body.answers || typeof body.answers !== 'object') return sendJson(res, 400, { error: 'Missing questionnaire answers.' });
+    if (!aiConfigured()) return sendJson(res, 503, { error: 'AI suggestions aren\u2019t set up yet — the server needs an ANTHROPIC_API_KEY (see README.md).' });
+    const result = await suggestPlan({ answers: body.answers, checkins: Array.isArray(body.checkins) ? body.checkins.slice(0, 20) : [] });
+    console.log(`AI suggestion: ${result.model}, ${result.usage.input_tokens} in / ${result.usage.output_tokens} out tokens`);
+    sendJson(res, 200, result);
+  } catch (err){
+    const [status, message] = aiErrorResponse(err);
+    console.error('AI suggestion failed:', err.message);
+    sendJson(res, status, { error: message });
+  }
+}
+
 const server = http.createServer((req, res) => {
   let urlPath = decodeURIComponent(req.url.split('?')[0]);
+
+  if (urlPath === '/api/ai-suggest'){
+    if (req.method !== 'POST'){ res.writeHead(405, { Allow: 'POST' }); res.end(); return; }
+    handleAiSuggest(req, res);
+    return;
+  }
+  if (urlPath === '/api/ai-status'){
+    // Only whether a key is present — never the key itself.
+    sendJson(res, 200, { configured: aiConfigured() });
+    return;
+  }
+
   if (urlPath === '/') urlPath = '/' + INDEX_FILE;
 
   const filePath = path.normalize(path.join(ROOT, urlPath));
-  if (!filePath.startsWith(ROOT)) {
+  const rel = path.relative(ROOT, filePath);
+  // Static files only — never node_modules or dotfiles (e.g. a .env
+  // holding the API key).
+  if (!filePath.startsWith(ROOT) || rel.split(path.sep).some(part => part === 'node_modules' || part.startsWith('.'))) {
     res.writeHead(403);
     res.end('Forbidden');
     return;
@@ -45,6 +112,8 @@ const server = http.createServer((req, res) => {
   });
 });
 
-server.listen(PORT, () => {
-  console.log(`Bells n Barz running at http://localhost:${PORT}`);
+// 127.0.0.1 only: the sandbox holds private drafts and an API key, so
+// it shouldn't be reachable from other devices on the network.
+server.listen(PORT, '127.0.0.1', () => {
+  console.log(`Meal Plan Sandbox running at http://localhost:${PORT}` + (process.env.ANTHROPIC_API_KEY ? '' : '  (AI suggestions off: ANTHROPIC_API_KEY not set)'));
 });

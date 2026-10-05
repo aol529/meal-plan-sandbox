@@ -53,6 +53,10 @@ button, input, select, textarea{font:inherit;}
 .topbar-controls{display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
 .viewer{display:flex; align-items:center; gap:8px; font-family:'IBM Plex Mono',monospace; font-size:11px; text-transform:uppercase; color:var(--muted-2);}
 .viewer select{background:var(--bg); color:var(--text); border:1px solid var(--line); border-radius:2px; padding:6px 8px; font-family:'IBM Plex Sans',sans-serif; font-size:13px; text-transform:none; max-width:260px;}
+.side-toggle{display:flex; border:1px solid var(--line); border-radius:2px; overflow:hidden;}
+.side-toggle[hidden]{display:none;}
+.side-toggle button{background:transparent; border:none; color:var(--muted); padding:6px 12px; font-family:'IBM Plex Mono',monospace; font-size:11px; text-transform:uppercase; letter-spacing:.04em; cursor:pointer;}
+.side-toggle button.active{background:rgba(var(--accent-rgb),.12); color:var(--accent); font-weight:600;}
 .bell{position:relative;}
 #bell-btn{position:relative; background:var(--surface-2); border:1px solid var(--line-soft); border-radius:2px; padding:5px 9px; cursor:pointer; font-size:15px; line-height:1;}
 .bell-count{position:absolute; top:-6px; right:-6px; background:var(--accent); color:var(--on-accent); font-family:'IBM Plex Mono',monospace; font-size:10px; font-weight:600; border-radius:10px; padding:1px 5px;}
@@ -147,3 +151,44 @@ button, input, select, textarea{font:inherit;}
 .mp-detail-head{display:flex; align-items:baseline; justify-content:space-between; flex-wrap:wrap; gap:8px; margin-bottom:12px;}
 .mp-detail-head h3{margin:0; font-size:18px;}
 .mp-coach-tabs{margin-bottom:16px;}
+
+/* ---------- AI suggestion page (sandbox-only) ---------- */
+.mp-page-tabs{margin-bottom:22px;}
+.mp-ai-note{border-left-color:var(--accent-3);}
+.mp-ai-note .btn2{margin-left:8px; padding:4px 10px;}
+.mp-rationale{border-left:3px solid var(--accent-3);}
+
+/* ---------- How it works page ---------- */
+.mp-how-lede{font-size:15px; color:var(--muted); max-width:70ch; margin:0 0 22px;}
+.mp-how-step{display:grid; grid-template-columns:44px 1fr; gap:14px; padding:18px 0; border-top:1px solid var(--line-soft);}
+.mp-how-step h3{font-size:18px; margin:4px 0 8px;}
+.mp-how-step p, .mp-how-step li{font-size:14.5px; line-height:1.6; max-width:70ch;}
+.mp-how-step p{margin:0 0 10px;}
+.mp-how-step ul{margin:0 0 10px; padding-left:20px;}
+.mp-how-step a{color:var(--accent);}
+.mp-how-num{width:36px; height:36px; border-radius:50%; border:1px solid var(--accent-dim); color:var(--accent); display:flex; align-items:center; justify-content:center; font-family:'Oswald',sans-serif; font-size:18px;}
+.mp-your-numbers{border-left:3px solid var(--accent); margin-top:6px;}
+.mp-plate{display:flex; align-items:center; gap:18px; flex-wrap:wrap; margin:8px 0 4px;}
+.mp-plate-key{list-style:none; padding:0; margin:0;}
+.mp-plate-key li{display:flex; align-items:center; gap:8px; font-size:13.5px; margin:4px 0;}
+.mp-plate-key .k{width:12px; height:12px; border-radius:2px; display:inline-block;}
+.mp-plate-key .veg{background:rgba(var(--accent-3-rgb),.55);}
+.mp-plate-key .pro{background:rgba(var(--accent-rgb),.6);}
+.mp-plate-key .sta{background:rgba(var(--accent-rgb),.28);}
+@media (max-width:640px){ .mp-how-step{grid-template-columns:1fr; gap:6px;} }
+
+/* ---------- Coach KA private draft ---------- */
+.ka-private{border-left-color:#e0736a;}
+.mp-ka-tab{border-style:dashed !important;}
+.ka-section summary{font-family:'Oswald',sans-serif; text-transform:uppercase; letter-spacing:.04em; font-size:16px;}
+.ka-section h4{font-size:14px; color:var(--accent); margin:18px 0 8px; font-family:'IBM Plex Mono',monospace;}
+.ka-section p, .ka-section li{font-size:14.5px; line-height:1.6; max-width:75ch;}
+.ka-section ul, .ka-section ol{padding-left:20px;}
+.ka-rule{padding:4px 0 10px; border-bottom:1px solid var(--line-soft); margin-bottom:10px;}
+.ka-rule:last-child{border-bottom:none;}
+.ka-rule h4{margin-top:8px;}
+.ka-review, .ka-review-inline{background:rgba(var(--accent-3-rgb),.10); border:1px dashed var(--accent-3); color:var(--text); font-size:13px; line-height:1.55; padding:9px 12px; margin:10px 0; border-radius:2px;}
+.ka-review b{color:var(--accent-3); font-family:'IBM Plex Mono',monospace; font-size:11px; text-transform:uppercase; letter-spacing:.05em; margin-right:6px;}
+.ka-review-inline{display:inline; padding:1px 6px; margin:0;}
+.ka-table td{font-size:13px;}
+.ka-small{font-size:13px !important; color:var(--muted); margin-top:8px;}

@@ -290,14 +290,20 @@
   function suggestTargets(a){
     const age = Number(a.age), h = Number(a.height_cm), w = Number(a.weight_kg);
     if (!age || !h || !w || !a.sex) return null;
-    const trains = !!String(a.exercise || '').trim();
+    const exercise = String(a.exercise || '').trim();
+    const trains = !!exercise;
+    // "Gym 4x/week", "3 times a week", "5 days" -> sessions per week.
+    // 3+ sessions is "moderately active" even with a desk job; fewer (or
+    // unstated) is "lightly active".
+    const perWeek = (exercise.match(/(\d+)\s*(x|×|times|days|sessions)/i) || [])[1];
     const bmr = 10 * w + 6.25 * h - 5 * age + (a.sex === 'Male' ? 5 : -161);
     const factor = a.job_activity === 'Physically demanding' ? 1.725
       : a.job_activity === 'On my feet some of the day' ? 1.55
-      : trains ? 1.375 : 1.2;
+      : !trains ? 1.2
+      : Number(perWeek) >= 3 ? 1.55 : 1.375;
     const goals = a.goals || [];
     let cal = bmr * factor;
-    if (goals.includes('Lose fat')) cal -= 400;
+    if (goals.includes('Lose fat')) cal -= 500;
     else if (goals.includes('Build muscle')) cal += 250;
     cal = Math.round(cal / 10) * 10;
     const protein = Math.round(w * (trains ? 1.8 : 1.2));
@@ -320,19 +326,201 @@
   }
 
   /* ============================================================
+     AI SUGGESTION (sandbox-only)
+     A second page next to the coach's plan: Claude's draft from the
+     same questionnaire (server.js -> ai.js, /api/ai-suggest). The
+     coach's plan stays the one the member follows; the coach can copy
+     the AI draft into their editor as a starting point.
+     ============================================================ */
+  // AI output (arrays + grocery objects) -> the plan editor's plain-text
+  // content shape, so the same planViewHtml() renders both pages.
+  function aiToContent(p){
+    const join = a => (a || []).join('\n');
+    return {
+      pattern: p.pattern || '',
+      breakfasts: join(p.breakfasts), lunches: join(p.lunches), dinners: join(p.dinners),
+      snacks: join(p.snacks), swaps: join(p.swaps),
+      eating_out: p.eating_out || '',
+      grocery: (p.grocery || []).map(g=> g.category + ': ' + (g.items || []).join(', ')).join('\n'),
+      notes: p.notes || ''
+    };
+  }
+
+  let aiBusy = {}; // memberId -> true while a request is in flight
+  async function generateAi(memberId){
+    const intake = S.getIntake(memberId);
+    if (!intake) return;
+    aiBusy[memberId] = true;
+    try {
+      const res = await fetch('/api/ai-suggest', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ answers: intake.answers, checkins: S.getCheckins(memberId) })
+      });
+      const body = await res.json().catch(()=> ({}));
+      if (!res.ok) throw new Error(body.error || ('AI request failed (' + res.status + ').'));
+      S.saveAi(memberId, body);
+      toast('AI suggestion ready.');
+    } catch (err){
+      toast(err.message || 'Couldn\u2019t get an AI suggestion.');
+    } finally {
+      delete aiBusy[memberId];
+    }
+  }
+
+  function aiPageHtml(memberId, forCoach){
+    const ai = S.getAi(memberId);
+    const busy = !!aiBusy[memberId];
+    let html = '<div class="admin-notice mp-ai-note">' + (forCoach
+      ? 'Drafted by AI (Claude) from this member\u2019s questionnaire' + (S.getCheckins(memberId).length ? ' and check-ins' : '') + ', following the gym\u2019s meal-plan guide. Check it before you rely on any of it — <b>Copy into my plan</b> loads it into your editor so you can change anything before sending.'
+      : 'A second opinion drafted by AI (Claude) from your answers. <b>Your coach\u2019s plan is the one to follow</b> — if something here looks useful, mention it to your coach.') + '</div>';
+    const genLabel = busy ? 'Drafting… (up to a minute)' : (ai ? 'Regenerate' : 'Get AI suggestion');
+    const genBtn = '<button type="button" class="btn2' + (ai ? '' : ' primary') + '" data-ai-generate' + (busy ? ' disabled' : '') + '>' + genLabel + '</button>';
+    if (!ai){
+      return html + '<div class="empty-msg">No AI suggestion yet.<div class="mp-actions" style="justify-content:center;">' + genBtn + '</div></div>';
+    }
+    const p = ai.plan;
+    html += '<div class="day-focus">AI suggestion · generated ' + fmtDate(ai.created_at) + '</div>';
+    if (p.referral_note) html += '<div class="admin-notice mp-refer">' + esc(p.referral_note) + '</div>';
+    html += '<div class="mp-sub-head">Daily targets</div>' + targetsHtml(p.targets, forCoach) +
+      planViewHtml({ content: aiToContent(p) });
+    if (p.rationale) html += '<div class="mp-plan-block mp-rationale"><h4>How the AI got here</h4><p>' + esc(p.rationale) + '</p></div>';
+    html += '<div class="mp-actions">' + genBtn + (forCoach ? '<button type="button" class="btn2 primary" data-ai-copy>Copy into my plan</button>' : '') + '</div>';
+    return html;
+  }
+
+  // Wires the Generate / Copy buttons inside a rendered AI page.
+  function wireAi(container, memberId, rerender, onCopy){
+    const gen = container.querySelector('[data-ai-generate]');
+    if (gen) gen.addEventListener('click', async ()=>{
+      const p = generateAi(memberId);
+      rerender();          // shows the "Drafting…" state
+      await p;
+      rerender();
+    });
+    const copy = container.querySelector('[data-ai-copy]');
+    if (copy && onCopy) copy.addEventListener('click', ()=> onCopy(S.getAi(memberId)));
+  }
+
+  /* ============================================================
+     HOW IT WORKS (member-facing explanation)
+     The gym's meal-plan guide (lappy/prof-meal-plan-Ndombii/
+     Meal_Plan_Guide(1).docx) is written for coaches; this is the same
+     seven steps reworded for the member, so they know what happens to
+     their answers and why the plan looks the way it does. Where their
+     questionnaire has the numbers, step 2 shows their own calculation.
+     ============================================================ */
+  function yourNumbersHtml(a){
+    const t = a && suggestTargets(a);
+    if (!t) return '';
+    const age = Number(a.age), h = Number(a.height_cm), w = Number(a.weight_kg);
+    const bmr = Math.round(10 * w + 6.25 * h - 5 * age + (a.sex === 'Male' ? 5 : -161));
+    return '<div class="mp-plan-block mp-your-numbers"><h4>With your answers</h4><p>' +
+      esc(a.sex) + ', ' + esc(age) + ', ' + esc(h) + ' cm, ' + esc(w) + ' kg → about <b>' + bmr.toLocaleString() + ' kcal</b> a day at rest. ' +
+      'With your activity and goal, a starting point of roughly <b>' + t.target_calories.toLocaleString() + ' kcal</b>: ' +
+      t.target_protein_g + ' g protein, ' + t.target_carbs_g + ' g carbs, ' + t.target_fat_g + ' g fat. ' +
+      'Your coach may set it differently — they know you, the formula doesn\u2019t.</p></div>';
+  }
+
+  function howItWorksHtml(answers){
+    const step = (n, title, body) => '<div class="mp-how-step"><div class="mp-how-num">' + n + '</div><div><h3>' + title + '</h3>' + body + '</div></div>';
+    return '<div class="day-focus">How your meal plan works</div>' +
+      '<p class="mp-how-lede">Your plan isn\u2019t a generic diet sheet. Your coach builds it around you in seven steps, then adjusts it as you go. Here\u2019s what happens, and why.</p>' +
+
+      step(1, 'You tell us about you',
+        '<p>The questionnaire covers your goals, how active you are, your health, the foods you love and won\u2019t eat, your budget, cooking time, and who you eat with. ' +
+        'The most useful part is <b>what you eat on a normal day right now</b> — the best plan usually adjusts the habits you already have rather than replacing them, so be honest; there are no wrong answers.</p>' +
+        '<p>Only your coach and the gym admin can see your answers. Prefer paper? <a href="docs/Meal_Plan_Questionnaire.pdf" target="_blank" rel="noopener">Download the printable questionnaire</a>.</p>') +
+
+      step(2, 'We estimate how much energy you need',
+        '<p>Your coach starts from a standard formula (Mifflin-St Jeor) that uses your weight, height, age and sex to estimate what your body burns at rest, then multiplies it by how active you are — from 1.2 if you mostly sit, up to 1.725 if you\u2019re very active.</p>' +
+        '<p>Then it\u2019s adjusted for your goal: about 300–500 kcal less a day for gradual fat loss, or 200–300 kcal more for building muscle. ' +
+        'These are estimates. <b>How your body actually responds over 2–3 weeks matters more than the formula</b>, which is why step 7 exists.</p>' +
+        yourNumbersHtml(answers)) +
+
+      step(3, 'We balance protein, fat and carbs',
+        '<ul><li><b>Protein</b> — about 1.6–2.2 g per kg of body weight if you train, or about 1.2 g/kg if you\u2019re less active. It keeps you full and protects muscle.</li>' +
+        '<li><b>Fat</b> — about a quarter to a third of your calories.</li>' +
+        '<li><b>Carbs</b> — the rest, mostly from whole grains, fruit, vegetables, beans and starchy staples.</li></ul>' +
+        '<p>Don\u2019t want to count anything? You don\u2019t have to. Use the <b>plate method</b>: half the plate vegetables, a quarter protein, a quarter starch, plus a little healthy fat.</p>' +
+        '<div class="mp-plate" role="img" aria-label="Plate method: half vegetables, a quarter protein, a quarter starch">' +
+          '<svg viewBox="0 0 120 120" width="120" height="120" aria-hidden="true"><circle cx="60" cy="60" r="56" fill="var(--surface-2)" stroke="var(--line)" stroke-width="2"/>' +
+          '<path d="M60 60 L60 4 A56 56 0 0 0 60 116 Z" fill="rgba(var(--accent-3-rgb),.55)"/>' +
+          '<path d="M60 60 L60 4 A56 56 0 0 1 116 60 Z" fill="rgba(var(--accent-rgb),.6)"/>' +
+          '<path d="M60 60 L116 60 A56 56 0 0 1 60 116 Z" fill="rgba(var(--accent-rgb),.28)"/></svg>' +
+          '<ul class="mp-plate-key"><li><span class="k veg"></span>½ vegetables</li><li><span class="k pro"></span>¼ protein</li><li><span class="k sta"></span>¼ starch</li><li>+ a little healthy fat</li></ul></div>') +
+
+      step(4, 'We build your meals',
+        '<p>First, a meal pattern that fits your day — for example 3 meals and 1 snack. Then every meal is built from four parts:</p>' +
+        '<ul><li><b>A protein</b> — eggs, chicken, fish, beans, lentils, yoghurt, beef</li>' +
+        '<li><b>A carb or starch</b> — rice, potatoes, oats, bread, whole grains</li>' +
+        '<li><b>Vegetables and/or fruit</b></li>' +
+        '<li><b>A bit of fat</b> — oil, avocado, nuts, seeds</li></ul>') +
+
+      step(5, 'A week that repeats',
+        '<p>You won\u2019t get 21 different meals to cook — people stick with plans that repeat. Expect 2–3 breakfast options, 3–4 lunches, 4–5 dinners and a few snacks, rotated through the week. ' +
+        'Leftovers are planned on purpose (cook once, eat twice), and you get a grocery list grouped by category.</p>') +
+
+      step(6, 'Room to be flexible',
+        '<p>A rigid plan tends to fail by week two, so yours includes simple swaps (chicken ↔ fish ↔ beans, rice ↔ potatoes), a plan for eating out, and room for the foods you enjoy.</p>') +
+
+      step(7, 'Check in, then adjust',
+        '<p>Every 2–3 weeks you send a quick check-in: your weight, energy, hunger, digestion, and how easy the plan is to follow. ' +
+        'Your coach uses it to adjust portions or calories in small steps — so the plan keeps fitting you, not the formula.</p>') +
+
+      '<div class="admin-notice mp-refer"><b>When a dietitian helps too.</b> If you have diabetes or kidney disease, are pregnant or breastfeeding, have had a difficult relationship with food, or take medication that diet can affect, your coach will suggest also working with a registered dietitian. ' +
+      'You can still get help with general healthy-eating structure here — it\u2019s about getting you the right support, not turning you away.</div>' +
+
+      '<div class="mp-plan-block"><h4>Your two pages</h4><p><b>Coach\u2019s plan</b> is the one to follow — written by your coach from these steps. ' +
+      '<b>AI suggestion</b> is a second opinion drafted by AI from the same answers and the same guide. If something there looks useful, mention it to your coach.</p></div>';
+  }
+
+  /* ============================================================
      MEMBER VIEW
      ============================================================ */
+  let memberPage = 'coach'; // 'coach' | 'ai' | 'how' | 'ka' (owner-only draft) — which page
+  let memberViewerId = null;
   let memberMode = null; // null = auto, 'edit' = editing the questionnaire
 
   async function renderMember(){
     if (!memberBody) return;
     const me = self();
     if (!me){ memberBody.innerHTML = '<div class="empty-msg">Sign in to start your meal plan.</div>'; return; }
+    // A different person opened the page (View as): start them on their
+    // own plan/questionnaire, not on whatever page the last person left open.
+    if (memberViewerId !== me.id){ memberViewerId = me.id; memberPage = 'coach'; memberMode = null; }
     memberBody.innerHTML = '<div class="empty-msg">Loading…</div>';
     const d = await loadFor(me.id);
     if (d.error){ memberBody.innerHTML = '<div class="empty-msg">Couldn’t load your meal plan — check your connection and try again.</div>'; return; }
 
     const head = '<div class="day-head"><h2>Meal Plan</h2></div>';
+    // Private draft page: only exists for the owner's account, and only
+    // if the git-ignored js/coach-ka-draft.js is present.
+    const showKaDraft = !!(window.MP_COACH_KA && window.MP_COACH_KA.isOwner(me.id));
+    if (memberPage === 'ka' && !showKaDraft) memberPage = 'coach';
+    const pageTabs = '<div class="sched-sub mp-page-tabs">' +
+      (d.intake ? '<button type="button" data-mp-page="coach" class="' + (memberPage === 'coach' ? 'active' : '') + '">Coach\u2019s plan</button>' +
+        '<button type="button" data-mp-page="ai" class="' + (memberPage === 'ai' ? 'active' : '') + '">AI suggestion</button>' : '') +
+      '<button type="button" data-mp-page="how" class="' + (memberPage === 'how' ? 'active' : '') + '">How it works</button>' +
+      (showKaDraft ? '<button type="button" data-mp-page="ka" class="mp-ka-tab' + (memberPage === 'ka' ? ' active' : '') + '">🔒 Coach KA (draft)</button>' : '') + '</div>';
+    const wirePageTabs = ()=> memberBody.querySelectorAll('[data-mp-page]').forEach(b=> b.addEventListener('click', ()=>{
+      memberPage = b.getAttribute('data-mp-page'); memberMode = null; renderMember(); window.scrollTo({ top: 0, behavior: 'smooth' });
+    }));
+
+    if (memberPage === 'ka'){
+      memberBody.innerHTML = head + pageTabs + window.MP_COACH_KA.html(d.intake ? d.intake.answers : null);
+      wirePageTabs();
+      return;
+    }
+
+    if (memberPage === 'how'){
+      memberBody.innerHTML = head + pageTabs + howItWorksHtml(d.intake ? d.intake.answers : null) +
+        (d.intake ? '' : '<div class="mp-actions"><button type="button" class="btn2 primary" id="mp-start-questionnaire">Start the questionnaire</button></div>');
+      wirePageTabs();
+      const start = document.getElementById('mp-start-questionnaire');
+      if (start) start.addEventListener('click', ()=>{ memberPage = 'coach'; renderMember(); window.scrollTo({ top: 0, behavior: 'smooth' }); });
+      return;
+    }
 
     if (!d.intake || memberMode === 'edit'){
       const prefill = d.intake ? d.intake.answers : {
@@ -341,12 +529,13 @@
         height_cm: (d.goals && d.goals.height_cm) || me.height || '',
         weight_kg: (d.goals && d.goals.weight_kg) || me.weight || ''
       };
-      memberBody.innerHTML = head +
+      memberBody.innerHTML = head + (d.intake ? '' : pageTabs) +
         '<div class="day-focus">' + (d.intake ? 'Update your answers' : 'Step 1 — tell your coach about you') + '</div>' +
         '<div class="admin-notice">Fill in as much as you can. Your answers help your coach build a plan that fits your goals, tastes and daily routine. Only your coach and the gym admin can see them.' +
         (me.trainerId ? ' Your coach: <b>' + esc(nameOf(me.trainerId)) + '</b>.' : ' <b>You don’t have a coach assigned yet</b> — until then it goes to the admin.') + '</div>' +
         questionnaireFormHtml(prefill) +
         (d.intake ? '<div class="mp-actions"><button type="button" class="btn2" id="mp-cancel-edit">Cancel</button></div>' : '');
+      wirePageTabs();
       const form = document.getElementById('mp-intake-form');
       form.addEventListener('submit', async (e)=>{
         e.preventDefault();
@@ -368,8 +557,11 @@
 
     let html = head;
     if (referralFlags(d.intake.answers).some(f=> f.strong)) html += '<div class="admin-notice mp-refer">' + REFER_NOTE + '</div>';
+    html += pageTabs;
 
-    if (!d.plan){
+    if (memberPage === 'ai'){
+      html += aiPageHtml(me.id, false);
+    } else if (!d.plan){
       html += '<div class="day-focus">Step 2 — your coach is building your plan</div>' +
         '<div class="empty-msg">Your answers are with your coach (sent ' + fmtDate(d.intake.submitted_at) + '). You’ll get a notification when your plan is ready.</div>';
     } else {
@@ -390,6 +582,8 @@
       '<div class="mp-actions"><button type="button" class="btn2" id="mp-edit-intake">Update my answers</button></div></details>';
     memberBody.innerHTML = html;
 
+    wirePageTabs();
+    wireAi(memberBody, me.id, renderMember);
     document.getElementById('mp-edit-intake').addEventListener('click', ()=>{ memberMode = 'edit'; renderMember(); });
     const ciForm = document.getElementById('mp-checkin-form');
     if (ciForm) ciForm.addEventListener('submit', async (e)=>{
@@ -417,7 +611,8 @@
      COACH VIEW
      ============================================================ */
   let coachSelected = null;
-  let coachTab = 'answers'; // 'answers' | 'plan' | 'checkins'
+  let coachTab = 'answers'; // 'answers' | 'ai' | 'plan' | 'checkins'
+  let pendingDraft = {};    // memberId -> { content, targets } copied from the AI page, not yet saved
 
   async function renderCoach(){
     if (!coachBody) return;
@@ -475,17 +670,21 @@
         '</ul>' + (strong ? 'You can still help with general healthy-eating structure.' : '') + '</div>';
     }
     html += '<div class="sched-sub mp-coach-tabs">' +
-      ['answers','plan','checkins'].map(t=> '<button type="button" data-mp-tab="' + t + '" class="' + (t === coachTab ? 'active' : '') + '">' +
-        (t === 'answers' ? 'Questionnaire' : t === 'plan' ? (d.plan ? 'Edit Plan' : 'Write Plan') : 'Check-ins (' + d.checkins.length + ')') + '</button>').join('') + '</div>';
+      ['answers','ai','plan','checkins'].map(t=> '<button type="button" data-mp-tab="' + t + '" class="' + (t === coachTab ? 'active' : '') + '">' +
+        (t === 'answers' ? 'Questionnaire' : t === 'ai' ? 'AI Suggestion' : t === 'plan' ? (d.plan ? 'Edit Plan' : 'Write Plan') : 'Check-ins (' + d.checkins.length + ')') + '</button>').join('') + '</div>';
 
     if (coachTab === 'answers'){
       html += answersHtml(d.intake.answers);
+    } else if (coachTab === 'ai'){
+      html += aiPageHtml(memberId, true);
     } else if (coachTab === 'checkins'){
       html += checkinListHtml(d.checkins);
     } else {
-      const c = (d.plan && d.plan.content) || {};
+      const draft = pendingDraft[memberId];
+      const c = draft ? draft.content : ((d.plan && d.plan.content) || {});
+      if (draft) html += '<div class="admin-notice mp-ai-note">Pre-filled from the AI suggestion — <b>not saved yet</b>. Edit anything, then send it. <button type="button" class="btn2" id="mp-discard-draft">Discard draft</button></div>';
       html += '<form class="mp-form" id="mp-plan-form">' +
-        '<div class="mp-sub-head" style="margin-top:0;">Daily targets</div>' + targetsEditorHtml(d.goals) +
+        '<div class="mp-sub-head" style="margin-top:0;">Daily targets</div>' + targetsEditorHtml(draft ? draft.targets : d.goals) +
         PLAN_FIELDS.map(f=> '<div class="mp-q"><label class="mp-q-label" for="mp-p-' + f.id + '">' + esc(f.label) + '</label>' +
           '<div class="field-hint mp-q-hint">' + esc(f.hint) + '</div>' +
           '<textarea class="mp-input" id="mp-p-' + f.id + '" name="' + f.id + '" rows="' + f.rows + '">' + esc(c[f.id]) + '</textarea></div>').join('') +
@@ -494,6 +693,14 @@
     }
     el.innerHTML = html;
 
+    wireAi(el, memberId, renderCoachDetail, (ai)=>{
+      pendingDraft[memberId] = { content: aiToContent(ai.plan), targets: ai.plan.targets };
+      coachTab = 'plan';
+      renderCoachDetail();
+      toast('AI draft loaded into your editor — review it, then send.');
+    });
+    const discard = document.getElementById('mp-discard-draft');
+    if (discard) discard.addEventListener('click', ()=>{ delete pendingDraft[memberId]; renderCoachDetail(); });
     const suggestBtn = document.getElementById('mp-suggest-targets');
     if (suggestBtn) suggestBtn.addEventListener('click', ()=>{
       const t = suggestTargets(d.intake.answers);
@@ -517,6 +724,7 @@
         S.saveGoals(memberId, TARGET_FIELDS.every(f=> goals[f.id] != null) ? goals : null);
         S.savePlan(memberId, content);
       } catch (err){ btn.disabled = false; toast(err.message); return; }
+      delete pendingDraft[memberId];
       btn.disabled = false;
       toast('Plan saved — ' + nameOf(memberId) + ' has been notified.');
       renderCoach();

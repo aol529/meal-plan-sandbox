@@ -12,10 +12,15 @@
   const bellBtn = document.getElementById('bell-btn');
   const bellList = document.getElementById('bell-list');
   const bellCount = document.getElementById('bell-count');
+  const sideToggle = document.getElementById('side-toggle');
+  // For accounts that are both a member and a coach/admin (e.g. the gym
+  // owner's own account): which side is showing. Plain members and
+  // plain coaches never see the toggle.
+  let side = 'coach';
 
   function esc(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
   function roleLabel(u){
-    if (u.roles.includes('admin')) return 'admin';
+    if (u.roles.includes('admin')) return u.roles.includes('member') ? 'member + coach + admin' : 'admin';
     if (u.roles.includes('trainer')) return 'coach';
     const coach = u.trainerId && S.user(u.trainerId);
     return 'member' + (coach ? ', coach: ' + coach.fullName : '');
@@ -37,7 +42,10 @@
       ? list.slice(0, 20).map(n=> '<button type="button" class="bell-item' + (n.read ? '' : ' unread') + '" data-id="' + n.id + '">' + esc(n.message) + '</button>').join('')
       : '<div class="bell-empty">No notifications yet.</div>';
     bellList.querySelectorAll('.bell-item').forEach(b=> b.addEventListener('click', ()=>{
+      const n = S.notifications().find(x=> x.id === b.getAttribute('data-id'));
       S.markRead(b.getAttribute('data-id'));
+      if (n && n.link === 'mealplan') side = 'member';
+      if (n && n.link === 'coach') side = 'coach';
       closeBell();
       render();
     }));
@@ -54,13 +62,25 @@
   function render(){
     const me = S.me();
     const staff = S.isCoachOrAdmin(me);
-    memberView.hidden = staff;
-    coachView.hidden = !staff;
-    if (staff) window.MP_RENDER.coach(); else window.MP_RENDER.member();
+    const both = staff && !!me && me.roles.includes('member');
+    sideToggle.hidden = !both;
+    const showCoach = staff && (!both || side === 'coach');
+    sideToggle.querySelectorAll('button').forEach(b=> b.classList.toggle('active', b.getAttribute('data-side') === (showCoach ? 'coach' : 'member')));
+    memberView.hidden = showCoach;
+    coachView.hidden = !showCoach;
+    // Empty whichever side is hidden, so nothing one account saw (e.g. the
+    // owner-only Coach KA draft) lingers in the page for the next one.
+    document.getElementById(showCoach ? 'mealplan-body' : 'coach-mealplans-body').innerHTML = '';
+    if (showCoach) window.MP_RENDER.coach(); else window.MP_RENDER.member();
     renderBell();
   }
+  sideToggle.querySelectorAll('button').forEach(b=> b.addEventListener('click', ()=>{
+    side = b.getAttribute('data-side'); render(); window.scrollTo(0, 0);
+  }));
 
-  viewerSelect.addEventListener('change', ()=>{ S.setViewer(viewerSelect.value); closeBell(); render(); window.scrollTo(0, 0); });
+  viewerSelect.addEventListener('change', ()=>{ S.setViewer(viewerSelect.value); side = 'coach'; closeBell(); render(); window.scrollTo(0, 0); });
+  // Lets the import snippet (README) refresh the page's view of the data.
+  window.MP_APP = { refresh(){ renderViewerSelect(); render(); } };
   document.getElementById('reset-btn').addEventListener('click', ()=>{
     S.reset();
     renderViewerSelect();

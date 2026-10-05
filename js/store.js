@@ -25,6 +25,7 @@
     plans: {},         // memberId -> { member_id, coach_id, content, updated_at }
     checkins: [],      // { id, member_id, weight_kg, energy, hunger, digestion, ease, notes, created_at }
     goals: {},         // memberId -> { target_calories, target_protein_g, target_carbs_g, target_fat_g }
+    ai: {},            // memberId -> { plan, model, created_at } — sandbox-only: the AI suggestion page
     notifications: []  // { id, user_id, message, link, read, created_at }
   };
 
@@ -36,6 +37,7 @@
     return JSON.parse(JSON.stringify(SEED));
   }
   let db = load();
+  if (!db.ai) db.ai = {}; // data saved before the AI page existed
   function save(){
     try { localStorage.setItem(KEY, JSON.stringify(db)); } catch(e){ /* storage unavailable — keep in memory */ }
   }
@@ -121,6 +123,30 @@
     saveGoals(memberId, goals){
       assert(isStaffFor(memberId), 'Only this member’s coach or an admin can set targets.');
       db.goals[memberId] = goals; save();
+    },
+
+    // AI suggestion: readable by the member, their coach and admins (same
+    // rule as everything else); either side may generate a new one.
+    getAi(memberId){ return canSee(memberId) ? (db.ai[memberId] || null) : null; },
+    saveAi(memberId, result){
+      assert(canSee(memberId), 'You can\u2019t generate a suggestion for this member.');
+      db.ai[memberId] = { plan: result.plan, model: result.model, created_at: now() };
+      save();
+    },
+
+    // Copies one member's records from the gym app (Supabase rows) into
+    // the sandbox. Adds or updates the user; replaces their intake, plan,
+    // check-ins and targets. Used once, from the browser console.
+    importMember(payload){
+      const u = payload.user;
+      assert(u && u.id && u.fullName, 'Import needs a user with id and fullName.');
+      const existing = user(u.id);
+      if (existing) Object.assign(existing, u); else db.users.push(u);
+      if (payload.intake) db.intake[u.id] = payload.intake; else delete db.intake[u.id];
+      if (payload.plan) db.plans[u.id] = payload.plan; else delete db.plans[u.id];
+      if (payload.goals) db.goals[u.id] = payload.goals; else delete db.goals[u.id];
+      db.checkins = db.checkins.filter(c=> c.member_id !== u.id).concat(payload.checkins || []);
+      save();
     },
 
     notifications(){ const v = me(); return v ? db.notifications.filter(n=> n.user_id === v.id) : []; },

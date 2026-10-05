@@ -80,7 +80,11 @@
 
   viewerSelect.addEventListener('change', ()=>{ S.setViewer(viewerSelect.value); side = 'member'; closeBell(); render(); window.scrollTo(0, 0); });
   // Lets the import snippet (README) refresh the page's view of the data.
-  window.MP_APP = { refresh(){ renderViewerSelect(); render(); } };
+  window.MP_APP = {
+    refresh(){ renderViewerSelect(); render(); },
+    // Jump to one side for accounts with both (e.g. "Edit this diet").
+    showSide(s){ side = s; render(); window.scrollTo(0, 0); }
+  };
   document.getElementById('reset-btn').addEventListener('click', ()=>{
     S.reset();
     renderViewerSelect();

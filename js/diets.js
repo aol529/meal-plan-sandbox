@@ -9,24 +9,67 @@
                     week: { head: [...], rows: [[...], ...] }, footnote }],
        weekCaution,                       // shown under every week
        how: { lede, steps: [{ title, body, options: [variant ids] }], caution },
-       reference(answers) -> html }       // long background (not editable here)
+       reference: [{ title, body }],      // background sections, shown collapsed
+       tokens: { name: (answers) -> html } }  // {{name}} placeholders in text
 
    The author's edits (Coach > My diets) are saved in MP_STORE and
    replace those defaults field by field — get()/visibleTo() always
-   return the edited version. Text fields use a tiny format: a blank
-   line starts a new paragraph, **double asterisks** make bold.
+   return the edited version. Text fields use a small typed format —
+   see rich() below.
    ============================================================ */
 (function(){
   const S = window.MP_STORE;
   const bases = [];
-  const EDITABLE = ['name', 'summary', 'tags', 'published', 'variants', 'weekCaution', 'how'];
+  const EDITABLE = ['name', 'summary', 'tags', 'published', 'variants', 'weekCaution', 'how', 'reference'];
 
   function esc(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
   function fmtDate(iso){ return new Date(iso).toLocaleDateString(undefined, { day:'numeric', month:'short', year:'numeric' }); }
-  // Plain text -> safe HTML: paragraphs on blank lines, **bold**.
-  function rich(text){
-    return String(text || '').trim().split(/\n\s*\n/).filter(Boolean).map(p=>
-      '<p>' + esc(p).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>') + '</p>').join('');
+  // Typed text -> safe HTML. Everything is escaped first; the only markup
+  // is this small set, one per line:
+  //   ### Heading        - bullet        1. numbered        > highlighted note
+  //   | a | b | c |  (table rows; the first row is the header)
+  //   **bold** inside any line · blank line = new paragraph
+  //   {{name}} on its own line = a live block from the diet's tokens
+  function rich(text, tokens, answers){
+    const lines = String(text || '').replace(/\r/g, '').split('\n');
+    const inline = t => esc(t).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
+    const isBlock = l => /^\s*(###\s|[-•]\s|\d+[.)]\s|>|\|)/.test(l) || /^\s*\{\{[\w-]+\}\}\s*$/.test(l);
+    let html = '', i = 0;
+    const take = re => { const out = []; while (i < lines.length && re.test(lines[i])) out.push(lines[i++]); return out; };
+    while (i < lines.length){
+      const l = lines[i];
+      if (!l.trim()){ i++; continue; }
+      let m;
+      if ((m = l.match(/^\s*\{\{([\w-]+)\}\}\s*$/))){
+        i++;
+        const fn = tokens && tokens[m[1]];
+        html += fn ? fn(answers) : '';
+      } else if (/^\s*###\s/.test(l)){
+        html += '<h4>' + inline(l.replace(/^\s*###\s+/, '')) + '</h4>'; i++;
+      } else if (/^\s*[-•]\s/.test(l)){
+        html += '<ul>' + take(/^\s*[-•]\s/).map(x=> '<li>' + inline(x.replace(/^\s*[-•]\s+/, '')) + '</li>').join('') + '</ul>';
+      } else if (/^\s*\d+[.)]\s/.test(l)){
+        html += '<ol>' + take(/^\s*\d+[.)]\s/).map(x=> '<li>' + inline(x.replace(/^\s*\d+[.)]\s+/, '')) + '</li>').join('') + '</ol>';
+      } else if (/^\s*>/.test(l)){
+        html += '<div class="admin-notice mp-refer">' + rich(take(/^\s*>/).map(x=> x.replace(/^\s*>\s?/, '')).join('\n')) + '</div>';
+      } else if (/^\s*\|/.test(l)){
+        const rows = take(/^\s*\|/).map(x=> x.trim().replace(/^\||\|$/g, '').split('|').map(c=> c.trim()))
+          .filter(r=> !r.every(c=> /^:?-{2,}:?$/.test(c)));
+        html += '<table class="admin-table ka-table"><tr>' + rows[0].map(c=> '<th>' + inline(c) + '</th>').join('') + '</tr>' +
+          rows.slice(1).map(r=> '<tr>' + r.map(c=> '<td>' + inline(c) + '</td>').join('') + '</tr>').join('') + '</table>';
+      } else {
+        const para = [];
+        while (i < lines.length && lines[i].trim() && !isBlock(lines[i])) para.push(lines[i++]);
+        html += '<p>' + para.map(inline).join('<br>') + '</p>';
+      }
+    }
+    return html;
+  }
+
+  function referenceHtml(diet, answers){
+    return (diet.reference || []).map(sec=>
+      '<details class="mp-details ka-section"><summary>' + esc(sec.title) + '</summary>' + rich(sec.body, diet.tokens, answers) + '</details>'
+    ).join('');
   }
   const clone = o => JSON.parse(JSON.stringify(o));
 
@@ -89,6 +132,9 @@
     const matched = variantFor(diet, answers);
     let html = '<button type="button" class="btn2 diet-back" data-diet-back>← All diets</button>' +
       '<div class="day-focus">' + esc(diet.name) + ' · by ' + esc(diet.author) + '</div>';
+    if (user && user.id === diet.ownerId){
+      html += '<div class="diet-owner-bar"><span>You wrote this diet.</span><button type="button" class="btn2 primary" data-diet-edit-own="' + esc(diet.id) + '">✏️ Edit this diet</button></div>';
+    }
     if (!diet.published){
       html += '<div class="admin-notice ka-private"><b>Not published — only you can see this diet.</b> Publish it from Coach → My diets.</div>';
     }
@@ -109,7 +155,7 @@
     if (diet.weekCaution) html += '<div class="admin-notice mp-refer">' + rich(diet.weekCaution) + '</div>';
 
     html += '<div class="mp-sub-head">How this diet works</div>' + howHtml(diet, variant);
-    if (diet.reference) html += '<div class="mp-sub-head">Background & reference</div>' + diet.reference(answers);
+    if ((diet.reference || []).length) html += '<div class="mp-sub-head">Background & reference</div>' + referenceHtml(diet, answers);
     return html;
   }
 
@@ -117,6 +163,17 @@
      Works on a draft copy; nothing reaches members until Save. */
   let editing = null;      // { id, draft }
   let editVariant = null;
+  let openRef = null;      // which reference section's text box is open
+  function baseOf(id){ return bases.find(x=> x.id === id) || {}; }
+  // Open the editor straight on one diet (e.g. from "Edit this diet").
+  function startEditing(id){
+    const d = get(id);
+    if (!d) return;
+    editing = { id: d.id, draft: clone(EDITABLE.reduce((o, k)=> (o[k] = d[k], o), {})) };
+    editing.draft.how = editing.draft.how || { lede: '', steps: [], caution: '' };
+    editing.draft.reference = editing.draft.reference || [];
+    editVariant = null; openRef = null;
+  }
 
   function editorListHtml(user){
     const mine = ownedBy(user);
@@ -174,9 +231,23 @@
       '<div class="mp-actions"><button type="button" class="btn2" data-step-add>+ Add step</button></div>' +
       '<div class="mp-q"><label class="mp-q-label">Closing caution</label><textarea class="mp-input" rows="3" data-hf="caution">' + esc(how.caution) + '</textarea></div></div>';
 
+    const ref = d.reference || [];
+    const tokens = baseOf(editing.id).tokens || {};
+    html += '<div class="diet-edit-section"><h3>Background & reference</h3>' +
+      '<div class="field-hint diet-format-help">Each section shows to members as a collapsible box. Typing format: <code>### Heading</code> · <code>- bullet</code> · <code>1. numbered</code> · <code>| table | row |</code> (first row = headings) · <code>&gt; highlighted note</code> · <code>**bold**</code>' +
+      Object.keys(tokens).map(t=> ' · <code>{{' + esc(t) + '}}</code> on its own line = the member’s own numbers').join('') + '</div>' +
+      ref.map((sec, ri)=> '<div class="diet-step-edit"><div class="diet-step-head"><span class="mp-how-num">' + (ri + 1) + '</span>' +
+        '<input type="text" class="mp-input" data-ref="' + ri + ':title" value="' + esc(sec.title) + '" aria-label="Section ' + (ri + 1) + ' title">' +
+        '<button type="button" class="btn2" data-ref-move="' + ri + ':-1" aria-label="Move up"' + (ri === 0 ? ' disabled' : '') + '>↑</button>' +
+        '<button type="button" class="btn2" data-ref-move="' + ri + ':1" aria-label="Move down"' + (ri === ref.length - 1 ? ' disabled' : '') + '>↓</button>' +
+        '<button type="button" class="btn2 diet-row-del" data-ref-del="' + ri + '" aria-label="Delete section">✕</button></div>' +
+        '<details class="diet-ref-body"' + (openRef === ri ? ' open' : '') + ' data-ref-open="' + ri + '"><summary>Edit text</summary>' +
+        '<div class="diet-ref-split"><textarea class="mp-input diet-ref-text" rows="16" data-ref="' + ri + ':body" aria-label="Section ' + (ri + 1) + ' text">' + esc(sec.body) + '</textarea>' +
+        '<div class="diet-ref-preview"><div class="field-hint">Preview</div>' + rich(sec.body, tokens, null) + '</div></div></details></div>').join('') +
+      '<div class="mp-actions"><button type="button" class="btn2" data-ref-add>+ Add section</button></div></div>';
+
     html += '<div class="diet-edit-bar"><button type="button" class="btn2 primary" data-edit-save>Save — members see it now</button>' +
-      '<button type="button" class="btn2" data-edit-reset>Reset to original</button>' +
-      '<span class="field-hint">Background & reference sections (rules, tea, food lists, calorie guide) are edited in the diet’s file.</span></div>';
+      '<button type="button" class="btn2" data-edit-reset>Reset to original</button></div>';
     void vi;
     return html;
   }
@@ -201,6 +272,10 @@
       v.week.rows[ri][ci] = el.value;
     });
     root.querySelectorAll('[data-hf]').forEach(el=>{ d.how[el.getAttribute('data-hf')] = el.value; });
+    root.querySelectorAll('[data-ref]').forEach(el=>{
+      const [ri, k] = el.getAttribute('data-ref').split(':');
+      d.reference[Number(ri)][k] = el.value;
+    });
     root.querySelectorAll('[data-step]').forEach(el=>{
       const [si, k] = el.getAttribute('data-step').split(':');
       d.how.steps[Number(si)][k] = el.value;
@@ -216,10 +291,7 @@
     if (!editing){
       root.innerHTML = editorListHtml(user);
       root.querySelectorAll('[data-diet-edit]').forEach(b=> b.addEventListener('click', ()=>{
-        const d = get(b.getAttribute('data-diet-edit'));
-        editing = { id: d.id, draft: clone(EDITABLE.reduce((o, k)=> (o[k] = d[k], o), {})) };
-        editing.draft.how = editing.draft.how || { lede: '', steps: [], caution: '' };
-        editVariant = null;
+        startEditing(b.getAttribute('data-diet-edit'));
         renderEditor(root, user, toast, onDone);
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }));
@@ -234,6 +306,18 @@
     act('[data-row-del]', b=>{ v().week.rows.splice(Number(b.getAttribute('data-row-del')), 1); });
     act('[data-step-add]', ()=>{ editing.draft.how.steps.push({ title: 'New step', body: '', options: [] }); });
     act('[data-step-del]', b=>{ editing.draft.how.steps.splice(Number(b.getAttribute('data-step-del')), 1); });
+    act('[data-ref-add]', ()=>{ editing.draft.reference.push({ title: 'New section', body: '' }); openRef = editing.draft.reference.length - 1; });
+    act('[data-ref-del]', b=>{ editing.draft.reference.splice(Number(b.getAttribute('data-ref-del')), 1); openRef = null; });
+    act('[data-ref-move]', b=>{
+      const [ri, dir] = b.getAttribute('data-ref-move').split(':').map(Number);
+      const r = editing.draft.reference; const j = ri + dir;
+      if (j >= 0 && j < r.length){ [r[ri], r[j]] = [r[j], r[ri]]; if (openRef === ri) openRef = j; }
+    });
+    // Live preview while typing (no re-render, so the cursor stays put).
+    root.querySelectorAll('.diet-ref-text').forEach(ta=> ta.addEventListener('input', ()=>{
+      ta.parentElement.querySelector('.diet-ref-preview').innerHTML = '<div class="field-hint">Preview</div>' + rich(ta.value, baseOf(editing.id).tokens, null);
+    }));
+    root.querySelectorAll('[data-ref-open]').forEach(dt=> dt.addEventListener('toggle', ()=>{ if (dt.open) openRef = Number(dt.getAttribute('data-ref-open')); }));
     act('[data-step-move]', b=>{
       const [si, dir] = b.getAttribute('data-step-move').split(':').map(Number);
       const st = editing.draft.how.steps; const j = si + dir;
@@ -261,6 +345,7 @@
     visibleTo, ownedBy, get,
     listHtml, detailHtml,
     renderEditor,
+    startEditing,
     rich
   };
 })();

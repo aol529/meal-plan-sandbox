@@ -16,112 +16,33 @@
   function esc(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
   const table = (head, rows) => '<table class="admin-table ka-table"><tr>' + head.map(h=> '<th>' + esc(h) + '</th>').join('') + '</tr>' +
     rows.map(r=> '<tr>' + r.map(c=> '<td>' + esc(c) + '</td>').join('') + '</tr>').join('') + '</table>';
-  const section = (title, body, open) => '<details class="mp-details ka-section"' + (open ? ' open' : '') + '><summary>' + title + '</summary>' + body + '</details>';
-
-  /* ---------------- 1. Rules ---------------- */
-  const RULES = section('Coach KA’s 7 rules', `
-    <div class="ka-rule"><h4>Rule #1 — Water first</h4>
-      <p>After a good night’s sleep (6+ hours), always drink water first thing in the morning — before your shower, before tea or food. You’ve gone all night without any, and starting the day hydrated supports healthy blood pressure, energy and digestion.</p>
-      <p>Through the day, aim for about <b>30–35 ml of water per kg of bodyweight</b> — roughly 2.5–3 litres at 80 kg — and more when you train or it’s hot. Water keeps you fuller between meals, which makes it easier to stick to your plan.</p>
-      <p class="ka-small">Have kidney or heart problems, or been told to limit fluids? Follow your doctor’s advice instead.</p>
-    </div>
-    <div class="ka-rule"><h4>Rule #2 — Fruit is food</h4>
-      <p>For real, ask the silverback gorilla.</p>
-      <p>A later first meal — around 10:00 am — suits a lot of people: it gives your body a longer overnight break before you eat again. If you train in the morning or feel shaky without breakfast, eat earlier; what matters most is what you eat, not the clock.</p>
-      <p>Your breakfast should be fruit, fruit salad, or at least start with a fruit. Fruit gives you fibre, vitamins and antioxidants, and its natural sugar comes packaged with fibre and water — steadier energy than any energy drink.</p>
-      <p>Water comes first, and whole fruit beats juice: juice loses most of the fibre and is easy to over-drink. If you want something blended, make it a smoothie, which keeps the whole fruit:</p>
-      <ol>
-        <li>Add a vegetable of your choice to a blender, like bok choy (found at Chandarana Foodplus stores).</li>
-        <li>Pick either dry or juicy fruit — e.g. pineapple and papaya, or banana and mango.</li>
-        <li>Add nuts and/or seeds: almonds, chia, flax, pumpkin, sesame seeds, peanuts, groundnuts.</li>
-        <li>Boost with turmeric and ginger.</li>
-        <li>Add plant-based milk.</li>
-      </ol>
-    </div>
-    <div class="ka-rule"><h4>Rule #3 — It’s not Breakfast, it is Break Fast</h4>
-      <p>Once your last meal has been digested your stomach is empty, and from then until you next eat, you are fasting — every night, for everyone. Your first meal is what breaks that fast.</p>
-      <p>Break it with something light and easy on an empty stomach that also rehydrates you — a smoothie, porridge, soup, or tea alongside some fruit. Porridge, soup or a smoothie with nuts or seeds beats juice alone, because they bring some protein and fibre to carry you to your next meal.</p>
-    </div>
-    <div class="ka-rule"><h4>Rule #4 — If you want to be as strong as a bull, don’t eat the bull, eat what the bull eats</h4>
-      <p>Raw nuts, seeds, grains, berries, vegetables. These could best escort the drink that breaks your fast. Most, if not all, of your dietary needs could be met in your first meal of the day.</p>
-    </div>
-    <div class="ka-rule"><h4>Rule #5 — Cooking does not require killing: eat plant-first</h4>
-      <p>Build most of what you eat from plants — fruit, vegetables, grains, beans, lentils, nuts and seeds. Keep meat, fish, eggs and dairy mostly to your main meal of the day (the 3–7 pm last meal in Options A–C), rather than spreading them through every meal.</p>
-      <p>Plant proteins count too: beans, lentils, ndengu, chickpeas, groundnuts and soy can stand in for meat on any day.</p>
-    </div>
-    <div class="ka-rule"><h4>Rule #6 — Avoid CRAP</h4>
-      <p>Carbonated, Refined, Artificial and Processed.</p>
-    </div>
-    <div class="ka-rule"><h4>Rule #7 — Good health starts in the gut</h4>
-      <p>Look after your gut and it looks after you. Feed it fibre — fruit, vegetables, beans, lentils and whole grains (Rules 2, 4 and 5) — and fermented foods like mala or plain yoghurt, and go easy on the processed stuff (Rule 6).</p>
-    </div>`);
-
-  /* ---------------- 2. Anti- properties ---------------- */
-  const ANTI = section('The power of "anti": protective properties in food', `
-    <p>Nutrition is more than macronutrients and calories — food is rich in natural compounds that may help the body resist inflammation, oxidation, infection and metabolic damage. Many have "anti-" properties.</p>
-    <p class="ka-small">These are reasons to eat more of these foods as part of a varied diet — not cures. Most effects were measured in lab or supplement-dose studies, so everyday amounts help gently over time.</p>
-    ${table(['Anti- property', 'May help…', 'Examples'], [
-      ['Anti-inflammatory', 'Calm inflammation', 'Turmeric, ginger, omega-3s'],
-      ['Antioxidant', 'Protect cells from oxidative stress', 'Berries, green tea, vitamin C'],
-      ['Antibacterial', 'Fight harmful bacteria', 'Garlic, honey, oregano oil'],
-      ['Antiviral', 'Support defence against viruses', 'Elderberry, green tea, zinc'],
-      ['Antifungal', 'Limit fungal growth', 'Coconut oil, garlic'],
-      ['Anticarcinogenic', 'Lower cancer risk', 'Cruciferous vegetables, green tea'],
-      ['Antidiabetic', 'Support steady blood sugar', 'Cinnamon, fibre, bitter melon'],
-      ['Antihypertensive', 'Support healthy blood pressure', 'Beets, garlic, potassium'],
-      ['Antithrombotic', 'Support healthy blood flow', 'Omega-3s, turmeric'],
-      ['Antiatherogenic', 'Protect arteries from plaque', 'Fibre, olive oil'],
-      ['Antilipidemic', 'Lower cholesterol/triglycerides', 'Oats, nuts, plant sterols'],
-      ['Antiobesogenic', 'Support a healthy weight', 'Green tea, vinegar, fibre'],
-      ['Antiglycation', 'Reduce AGE-related ageing damage', 'Cinnamon, polyphenols'],
-      ['Antimutagenic', 'Protect DNA', 'Cruciferous vegetables, chlorophyll'],
-      ['Antidepressant', 'Support mood', 'Omega-3s, dark chocolate, B vitamins'],
-      ['Antianxiety', 'Calm the nervous system', 'Magnesium, ashwagandha'],
-      ['Antineurodegenerative', 'Protect brain function', 'Curcumin, resveratrol'],
-      ['Antispasmodic', 'Ease cramps/spasms', 'Peppermint, magnesium'],
-      ['Antiemetic', 'Ease nausea', 'Ginger, vitamin B6'],
-      ['Antiallergic', 'Ease allergic reactions', 'Quercetin, vitamin C'],
-      ['Antiulcerogenic', 'Protect the stomach lining', 'Cabbage juice, licorice'],
-      ['Antinociceptive', 'Ease pain', 'Turmeric, capsaicin'],
-      ['Antiaging', 'Slow cellular ageing', 'Antioxidants, healthy fats']
-    ])}
-    <div class="admin-notice mp-refer"><b>Supplements are different from food.</b> Ashwagandha, licorice root, quercetin, elderberry and other concentrated supplements can interact with medication (including blood-pressure and blood-thinning drugs) and aren\u2019t advised in pregnancy. Check with a doctor or pharmacist before taking them — the foods themselves are fine in normal amounts.</div>`);
-
-  /* ---------------- 3. Bedtime tea ---------------- */
-  const TEA = section('Bedtime anti-inflammatory tea', `
-    ${table(['Ingredient', 'Key benefits'], [
-      ['Turmeric', 'Anti-inflammatory, antioxidant, liver support, may promote better sleep'],
-      ['Black pepper', 'Enhances absorption of curcumin (from turmeric), aids digestion'],
-      ['Ginger', 'Anti-nausea, anti-inflammatory, promotes digestion, warms the body'],
-      ['Lemon', 'Vitamin C, aids digestion, boosts immunity'],
-      ['Cloves', 'Antibacterial, anti-inflammatory, aids digestion, may reduce oral bacteria']
-    ])}
-    <h4>Why before bed</h4>
-    <ul><li>May help calm inflammation overnight</li><li>Supports digestion and may reduce bloating or gas</li><li>Can support your immune defences</li><li>Warms the body, helping you relax</li><li>May support steadier blood sugar</li><li>Adds antioxidants during your body\u2019s overnight repair</li></ul>
-    <h4>Recipe (single serving)</h4>
-    <ul><li>½ tsp turmeric powder (or 1-inch fresh root)</li><li>A pinch (⅛ tsp) of black pepper</li><li>1-inch fresh ginger, sliced, or ½ tsp powder</li><li>2 cloves</li><li>½ lemon, squeezed</li><li>1.5–2 cups water</li><li>Optional: ½ tsp raw honey, added after steeping — not during boiling</li></ul>
-    <ol><li>Bring the water to a boil.</li><li>Add turmeric, ginger, cloves and black pepper.</li><li>Simmer on low heat for 10 minutes.</li><li>Turn off the heat; add the lemon juice and optional honey.</li><li>Strain and sip slowly, 30–60 minutes before bed.</li></ol>
-    <p><b>Best time:</b> 30–60 minutes before bed, or during the post-dinner wind-down. Not right before lying down, to avoid reflux or waking up to pee.</p>
-    <p><b>Variations:</b> add cinnamon; a splash of coconut or almond milk for a "golden milk" style drink; leave out honey (or keep it under ½ tsp) if fasting; swap cloves for cardamom or star anise sometimes.</p>
-    <div class="admin-notice mp-refer"><b>Cautions</b> — heartburn or reflux (lemon, ginger) in sensitive people; cloves, turmeric and ginger all mildly thin the blood, so <b>be careful if on blood-thinning medication</b>; ginger and pepper can be stimulating in excess; too much pepper or turmeric can upset an empty stomach; lemon and ginger can make you urinate more.</div>
-`);
-
-  /* ---------------- 4. Food lists ---------------- */
-  const FOODS = section('What to eat — food lists', table(['Group', 'Foods'], [
-    ['Fruits', 'Bananas, apples, pears, peaches, mangoes, lemons, limes, papaya, soursop, passion fruit, avocado'],
-    ['Vegetables', 'Spinach, kale, lettuce, cucumber, cauliflower, broccoli, tomato, celery, cabbage, bell peppers, onions, okra, mushrooms, cayenne pepper'],
-    ['Whole grains', 'Oats, millet, brown rice, basmati/pishori rice, maize'],
-    ['Nuts', 'Almonds, cashews, peanuts, hazelnuts, pistachios, walnuts, macadamia'],
-    ['Dried fruit', 'Dates, raisins, figs, apricots, prunes'],
-    ['Roots', 'Irish potatoes, sweet potatoes, yam, cassava, carrots'],
-    ['Legumes', 'Kidney, garbanzo, black and black-eyed beans; red and green lentils; chickpeas, green peas'],
-    ['Seeds', 'Sesame, pumpkin, chia, flax, sunflower'],
-    ['Plant-based milk', 'Soy, coconut, almond, cashew, oat'],
-    ['Salad oils', 'Olive, coconut, avocado, sesame'],
-    ['Salt', 'Himalayan, sea, iodized, pink'],
-    ['Herbs & spices', 'Parsley, cilantro, paprika, coriander, cinnamon'],
-    ['Sweeteners', 'Stevia, jaggery, honey']
-  ])) ;
+  /* ---------------- 1–4. Background & reference ---------------- */
+  // Background & reference sections, as editable text (Coach > My diets).
+  // Format: ### heading · - bullet · 1. numbered · | table | row | ·
+  // > highlighted note · **bold** · {{your-numbers}} = the viewer's own
+  // calorie numbers (yourStatsHtml below).
+  const REFERENCE = [
+    {
+      "title": "Coach KA’s 7 rules",
+      "body": "### Rule #1 — Water first\nAfter a good night’s sleep (6+ hours), always drink water first thing in the morning — before your shower, before tea or food. You’ve gone all night without any, and starting the day hydrated supports healthy blood pressure, energy and digestion.\n\nThrough the day, aim for about **30–35 ml of water per kg of bodyweight** — roughly 2.5–3 litres at 80 kg — and more when you train or it’s hot. Water keeps you fuller between meals, which makes it easier to stick to your plan.\n\nHave kidney or heart problems, or been told to limit fluids? Follow your doctor’s advice instead.\n\n### Rule #2 — Fruit is food\nFor real, ask the silverback gorilla.\n\nA later first meal — around 10:00 am — suits a lot of people: it gives your body a longer overnight break before you eat again. If you train in the morning or feel shaky without breakfast, eat earlier; what matters most is what you eat, not the clock.\n\nYour breakfast should be fruit, fruit salad, or at least start with a fruit. Fruit gives you fibre, vitamins and antioxidants, and its natural sugar comes packaged with fibre and water — steadier energy than any energy drink.\n\nWater comes first, and whole fruit beats juice: juice loses most of the fibre and is easy to over-drink. If you want something blended, make it a smoothie, which keeps the whole fruit:\n1. Add a vegetable of your choice to a blender, like bok choy (found at Chandarana Foodplus stores).\n2. Pick either dry or juicy fruit — e.g. pineapple and papaya, or banana and mango.\n3. Add nuts and/or seeds: almonds, chia, flax, pumpkin, sesame seeds, peanuts, groundnuts.\n4. Boost with turmeric and ginger.\n5. Add plant-based milk.\n\n### Rule #3 — It’s not Breakfast, it is Break Fast\nOnce your last meal has been digested your stomach is empty, and from then until you next eat, you are fasting — every night, for everyone. Your first meal is what breaks that fast.\n\nBreak it with something light and easy on an empty stomach that also rehydrates you — a smoothie, porridge, soup, or tea alongside some fruit. Porridge, soup or a smoothie with nuts or seeds beats juice alone, because they bring some protein and fibre to carry you to your next meal.\n\n### Rule #4 — If you want to be as strong as a bull, don’t eat the bull, eat what the bull eats\nRaw nuts, seeds, grains, berries, vegetables. These could best escort the drink that breaks your fast. Most, if not all, of your dietary needs could be met in your first meal of the day.\n\n### Rule #5 — Cooking does not require killing: eat plant-first\nBuild most of what you eat from plants — fruit, vegetables, grains, beans, lentils, nuts and seeds. Keep meat, fish, eggs and dairy mostly to your main meal of the day (the 3–7 pm last meal in Options A–C), rather than spreading them through every meal.\n\nPlant proteins count too: beans, lentils, ndengu, chickpeas, groundnuts and soy can stand in for meat on any day.\n\n### Rule #6 — Avoid CRAP\nCarbonated, Refined, Artificial and Processed.\n\n### Rule #7 — Good health starts in the gut\nLook after your gut and it looks after you. Feed it fibre — fruit, vegetables, beans, lentils and whole grains (Rules 2, 4 and 5) — and fermented foods like mala or plain yoghurt, and go easy on the processed stuff (Rule 6)."
+    },
+    {
+      "title": "The power of \"anti\": protective properties in food",
+      "body": "Nutrition is more than macronutrients and calories — food is rich in natural compounds that may help the body resist inflammation, oxidation, infection and metabolic damage. Many have \"anti-\" properties.\n\nThese are reasons to eat more of these foods as part of a varied diet — not cures. Most effects were measured in lab or supplement-dose studies, so everyday amounts help gently over time.\n\n| Anti- property | May help… | Examples |\n| Anti-inflammatory | Calm inflammation | Turmeric, ginger, omega-3s |\n| Antioxidant | Protect cells from oxidative stress | Berries, green tea, vitamin C |\n| Antibacterial | Fight harmful bacteria | Garlic, honey, oregano oil |\n| Antiviral | Support defence against viruses | Elderberry, green tea, zinc |\n| Antifungal | Limit fungal growth | Coconut oil, garlic |\n| Anticarcinogenic | Lower cancer risk | Cruciferous vegetables, green tea |\n| Antidiabetic | Support steady blood sugar | Cinnamon, fibre, bitter melon |\n| Antihypertensive | Support healthy blood pressure | Beets, garlic, potassium |\n| Antithrombotic | Support healthy blood flow | Omega-3s, turmeric |\n| Antiatherogenic | Protect arteries from plaque | Fibre, olive oil |\n| Antilipidemic | Lower cholesterol/triglycerides | Oats, nuts, plant sterols |\n| Antiobesogenic | Support a healthy weight | Green tea, vinegar, fibre |\n| Antiglycation | Reduce AGE-related ageing damage | Cinnamon, polyphenols |\n| Antimutagenic | Protect DNA | Cruciferous vegetables, chlorophyll |\n| Antidepressant | Support mood | Omega-3s, dark chocolate, B vitamins |\n| Antianxiety | Calm the nervous system | Magnesium, ashwagandha |\n| Antineurodegenerative | Protect brain function | Curcumin, resveratrol |\n| Antispasmodic | Ease cramps/spasms | Peppermint, magnesium |\n| Antiemetic | Ease nausea | Ginger, vitamin B6 |\n| Antiallergic | Ease allergic reactions | Quercetin, vitamin C |\n| Antiulcerogenic | Protect the stomach lining | Cabbage juice, licorice |\n| Antinociceptive | Ease pain | Turmeric, capsaicin |\n| Antiaging | Slow cellular ageing | Antioxidants, healthy fats |\n\n> **Supplements are different from food.** Ashwagandha, licorice root, quercetin, elderberry and other concentrated supplements can interact with medication (including blood-pressure and blood-thinning drugs) and aren’t advised in pregnancy. Check with a doctor or pharmacist before taking them — the foods themselves are fine in normal amounts."
+    },
+    {
+      "title": "Bedtime anti-inflammatory tea",
+      "body": "| Ingredient | Key benefits |\n| Turmeric | Anti-inflammatory, antioxidant, liver support, may promote better sleep |\n| Black pepper | Enhances absorption of curcumin (from turmeric), aids digestion |\n| Ginger | Anti-nausea, anti-inflammatory, promotes digestion, warms the body |\n| Lemon | Vitamin C, aids digestion, boosts immunity |\n| Cloves | Antibacterial, anti-inflammatory, aids digestion, may reduce oral bacteria |\n\n### Why before bed\n- May help calm inflammation overnight\n- Supports digestion and may reduce bloating or gas\n- Can support your immune defences\n- Warms the body, helping you relax\n- May support steadier blood sugar\n- Adds antioxidants during your body’s overnight repair\n\n### Recipe (single serving)\n- ½ tsp turmeric powder (or 1-inch fresh root)\n- A pinch (⅛ tsp) of black pepper\n- 1-inch fresh ginger, sliced, or ½ tsp powder\n- 2 cloves\n- ½ lemon, squeezed\n- 1.5–2 cups water\n- Optional: ½ tsp raw honey, added after steeping — not during boiling\n\n1. Bring the water to a boil.\n2. Add turmeric, ginger, cloves and black pepper.\n3. Simmer on low heat for 10 minutes.\n4. Turn off the heat; add the lemon juice and optional honey.\n5. Strain and sip slowly, 30–60 minutes before bed.\n\n**Best time:** 30–60 minutes before bed, or during the post-dinner wind-down. Not right before lying down, to avoid reflux or waking up to pee.\n\n**Variations:** add cinnamon; a splash of coconut or almond milk for a \"golden milk\" style drink; leave out honey (or keep it under ½ tsp) if fasting; swap cloves for cardamom or star anise sometimes.\n\n> **Cautions** — heartburn or reflux (lemon, ginger) in sensitive people; cloves, turmeric and ginger all mildly thin the blood, so **be careful if on blood-thinning medication**; ginger and pepper can be stimulating in excess; too much pepper or turmeric can upset an empty stomach; lemon and ginger can make you urinate more."
+    },
+    {
+      "title": "What to eat — food lists",
+      "body": "| Group | Foods |\n| Fruits | Bananas, apples, pears, peaches, mangoes, lemons, limes, papaya, soursop, passion fruit, avocado |\n| Vegetables | Spinach, kale, lettuce, cucumber, cauliflower, broccoli, tomato, celery, cabbage, bell peppers, onions, okra, mushrooms, cayenne pepper |\n| Whole grains | Oats, millet, brown rice, basmati/pishori rice, maize |\n| Nuts | Almonds, cashews, peanuts, hazelnuts, pistachios, walnuts, macadamia |\n| Dried fruit | Dates, raisins, figs, apricots, prunes |\n| Roots | Irish potatoes, sweet potatoes, yam, cassava, carrots |\n| Legumes | Kidney, garbanzo, black and black-eyed beans; red and green lentils; chickpeas, green peas |\n| Seeds | Sesame, pumpkin, chia, flax, sunflower |\n| Plant-based milk | Soy, coconut, almond, cashew, oat |\n| Salad oils | Olive, coconut, avocado, sesame |\n| Salt | Himalayan, sea, iodized, pink |\n| Herbs & spices | Parsley, cilantro, paprika, coriander, cinnamon |\n| Sweeteners | Stevia, jaggery, honey |"
+    },
+    {
+      "title": "Calorie counting guide for muscle gain",
+      "body": "1. **Understanding calories** — a calorie is a unit of energy; calories in food are how much energy your body gets from what you eat and drink.\n2. **Why count?** To gain muscle, eat in a surplus (more than you burn). To lose fat, eat in a deficit. To maintain, eat what you burn.\n3. **How** — track everything you eat and drink, use an app (e.g. MyFitnessPal, Cronometer), and use a food scale for accuracy.\n4. **Calories per gram** — protein 4, carbohydrate 4, fat 9, alcohol 7.\n\n{{your-numbers}}\n\n### Sample week — 2 large meals a day (~1,600–1,700 kcal each), plus an optional shake or snack\n| Day | Meal 1 | Meal 2 |\n| 1 | Chicken breast (200 g), rice (200 g), avocado (50 g), Greek yoghurt with honey & oats | Salmon (150 g), sweet potatoes (250 g), olive-oil-dressed salad, banana + whey shake |\n| 2 | Beef mince (150 g), couscous, chickpeas, mixed greens, 1 tbsp olive oil | Grilled tofu or paneer (200 g), brown rice, peanut-butter smoothie (banana + whey) |\n| 3 | Turkey breast, roasted potatoes, hummus, Greek yoghurt with granola | Shrimp stir-fry (200 g), noodles, avocado, a square of dark chocolate |\n| 4 | Lamb or steak (150 g), quinoa, spinach sautéed in oil, fruit + yoghurt | Cottage cheese (200 g), oats with nuts and banana, whey shake |\n| 5 | Eggs (4), chicken sausage, toast (2), beans, apple with peanut butter | Grilled chicken thighs (200 g), pasta, olive oil, side salad |\n| 6 | Tuna wrap (2 large wraps), guacamole, Greek yoghurt | Baked salmon, rice with peas, avocado salad, chocolate protein shake |\n| 7 | Eggs (3), smoked salmon, potatoes, oats with a protein scoop | Chicken curry (200 g), basmati rice, yoghurt, peanut-butter smoothie |\n\n**Kenyan swaps:** turkey → chicken · salmon or shrimp → tilapia or omena · paneer or cottage cheese → eggs, beans or mala · couscous or quinoa → rice, githeri or ugali · noodles or pasta → rice or chapati · whey or casein shake → milk with groundnuts or peanut butter · Greek yoghurt → mala or plain yoghurt.\n\n### Tips for success\n- Track all food daily with an app.\n- Use a kitchen scale.\n- Meal-prep to stay consistent.\n- Weigh yourself weekly — aim for 0.25–0.5 kg gain a week.\n- Adjust intake if your weight stalls for 2–3 weeks.\n\n### Bulking on a budget\nFood over supplements — build on cheap staples. Carbs: rice, oats, potatoes, pasta, maize flour. Protein: eggs, chicken thighs, minced beef, beans, omena. Fats: peanut butter, groundnuts, cooking oil, whole milk.\n\n**Example day:** breakfast — oats + peanut butter + whey; lunch — rice + chicken thighs + veggies; post-workout — whey shake + banana; dinner — pasta + ground beef + cheese; before bed — casein shake or cottage cheese."
+    }
+  ];
 
   /* ---------------- 5. Weekly options ---------------- */
   const JUICE = ['Juice', '6–8 am', 'Coconut', 'Pineapple', 'Watermelon', 'Apple', 'Mango', 'Passion'];
@@ -223,32 +144,6 @@
       '<li><b>Daily example:</b> ' + pMid + ' g protein, ' + fMid + ' g fat, ' + cMid + ' g carbs ≈ ' + cal.toLocaleString() + ' kcal</li></ul>';
   }
 
-  const CALORIES = (answers) => section('Calorie counting guide for muscle gain', `
-    <ol>
-      <li><b>Understanding calories</b> — a calorie is a unit of energy; calories in food are how much energy your body gets from what you eat and drink.</li>
-      <li><b>Why count?</b> To gain muscle, eat in a surplus (more than you burn). To lose fat, eat in a deficit. To maintain, eat what you burn.</li>
-      <li><b>How</b> — track everything you eat and drink, use an app (e.g. MyFitnessPal, Cronometer), and use a food scale for accuracy.</li>
-      <li><b>Calories per gram</b> — protein 4, carbohydrate 4, fat 9, alcohol 7.</li>
-    </ol>
-    ${yourStatsHtml(answers)}
-    <h4>Sample week — 2 large meals a day (~1,600–1,700 kcal each), plus an optional shake or snack</h4>
-    ${table(['Day', 'Meal 1', 'Meal 2'], [
-      ['1', 'Chicken breast (200 g), rice (200 g), avocado (50 g), Greek yoghurt with honey & oats', 'Salmon (150 g), sweet potatoes (250 g), olive-oil-dressed salad, banana + whey shake'],
-      ['2', 'Beef mince (150 g), couscous, chickpeas, mixed greens, 1 tbsp olive oil', 'Grilled tofu or paneer (200 g), brown rice, peanut-butter smoothie (banana + whey)'],
-      ['3', 'Turkey breast, roasted potatoes, hummus, Greek yoghurt with granola', 'Shrimp stir-fry (200 g), noodles, avocado, a square of dark chocolate'],
-      ['4', 'Lamb or steak (150 g), quinoa, spinach sautéed in oil, fruit + yoghurt', 'Cottage cheese (200 g), oats with nuts and banana, whey shake'],
-      ['5', 'Eggs (4), chicken sausage, toast (2), beans, apple with peanut butter', 'Grilled chicken thighs (200 g), pasta, olive oil, side salad'],
-      ['6', 'Tuna wrap (2 large wraps), guacamole, Greek yoghurt', 'Baked salmon, rice with peas, avocado salad, chocolate protein shake'],
-      ['7', 'Eggs (3), smoked salmon, potatoes, oats with a protein scoop', 'Chicken curry (200 g), basmati rice, yoghurt, peanut-butter smoothie']
-    ])}
-    <p class="ka-small"><b>Kenyan swaps:</b> turkey → chicken · salmon or shrimp → tilapia or omena · paneer or cottage cheese → eggs, beans or mala · couscous or quinoa → rice, githeri or ugali · noodles or pasta → rice or chapati · whey or casein shake → milk with groundnuts or peanut butter · Greek yoghurt → mala or plain yoghurt.</p>
-    <h4>Tips for success</h4>
-    <ul><li>Track all food daily with an app.</li><li>Use a kitchen scale.</li><li>Meal-prep to stay consistent.</li><li>Weigh yourself weekly — aim for 0.25–0.5 kg gain a week.</li><li>Adjust intake if your weight stalls for 2–3 weeks.</li></ul>
-    <h4>Bulking on a budget</h4>
-    <p>Food over supplements — build on cheap staples. Carbs: rice, oats, potatoes, pasta, maize flour. Protein: eggs, chicken thighs, minced beef, beans, omena. Fats: peanut butter, groundnuts, cooking oil, whole milk.</p>
-    <p><b>Example day:</b> breakfast — oats + peanut butter + whey; lunch — rice + chicken thighs + veggies; post-workout — whey shake + banana; dinner — pasta + ground beef + cheese; before bed — casein shake or cottage cheese.</p>
-`);
-
   if (!window.MP_DIETS) return; // diets.js not loaded
   window.MP_DIETS.register({
     id: 'coach-ka-2025',
@@ -261,6 +156,7 @@
     variants: VARIANTS,
     weekCaution: WEEK_CAUTION,
     how: HOW,
-    reference: (answers) => RULES + ANTI + TEA + FOODS + CALORIES(answers)
+    reference: REFERENCE,
+    tokens: { 'your-numbers': yourStatsHtml }
   });
 })();

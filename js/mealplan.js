@@ -547,6 +547,12 @@
       memberBody.querySelectorAll('[data-diet-open]').forEach(b=> b.addEventListener('click', ()=>{
         dietOpenId = b.getAttribute('data-diet-open'); dietVariantId = null; rerender(); window.scrollTo({ top: 0, behavior: 'smooth' });
       }));
+      const editOwn = memberBody.querySelector('[data-diet-edit-own]');
+      if (editOwn) editOwn.addEventListener('click', ()=>{
+        window.MP_DIETS.startEditing(editOwn.getAttribute('data-diet-edit-own'));
+        coachSection = 'diets';
+        window.MP_APP.showSide('coach');
+      });
       const back = memberBody.querySelector('[data-diet-back]');
       if (back) back.addEventListener('click', ()=>{ dietOpenId = null; dietVariantId = null; rerender(); });
       memberBody.querySelectorAll('[data-diet-variant]').forEach(b=> b.addEventListener('click', ()=>{

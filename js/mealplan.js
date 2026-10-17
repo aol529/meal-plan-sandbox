@@ -280,29 +280,32 @@
     return { answers: a, found, unclear: body.unclear || [] };
   }
 
-  // Puts imported answers into the form and marks what changed. Questions
-  // the file left blank keep whatever the form already had.
+  // Replaces the form with the uploaded questionnaire and marks what it
+  // filled in. A question left blank in the file is cleared, so nothing
+  // from earlier answers (or someone else's) is mixed in.
   function fillQuestionnaire(form, a){
     form.querySelectorAll('.mp-imported').forEach(el=> el.classList.remove('mp-imported'));
     QUESTIONS.forEach(q=>{
-      if (!q.id || !(q.id in a)) return;
+      if (!q.id) return;
       if (q.type === 'day'){
+        const day = a.typical_day || {};
         TYPICAL_DAY_ROWS.forEach((row, i)=>{
-          const v = a.typical_day[row];
-          if (!v) return;
+          const v = day[row] || {};
           ['time', 'what'].forEach(part=>{
             const el = form.querySelector('[data-day-row="' + i + '"][data-day-part="' + part + '"]');
-            if (v[part]){ el.value = v[part]; el.classList.add('mp-imported'); }
+            el.value = v[part] || '';
+            if (v[part]) el.classList.add('mp-imported');
           });
         });
         return;
       }
       const field = form.querySelector('[name="' + q.id + '"]');
+      const has = q.id in a;
       if (q.type === 'checks' || q.type === 'radio'){
-        const chosen = q.type === 'checks' ? a[q.id] : [a[q.id]];
+        const chosen = !has ? [] : q.type === 'checks' ? a[q.id] : [a[q.id]];
         form.querySelectorAll('input[name="' + q.id + '"]').forEach(el=>{ el.checked = chosen.indexOf(el.value) !== -1; });
-      } else field.value = a[q.id];
-      field.closest('.mp-q').classList.add('mp-imported');
+      } else field.value = has ? a[q.id] : '';
+      if (has) field.closest('.mp-q').classList.add('mp-imported');
     });
   }
 

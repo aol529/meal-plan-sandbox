@@ -404,6 +404,7 @@
   // used on the AI page, where the plan is long and is mostly skimmed.
   function planViewHtml(plan, opts){
     const collapsible = !!(opts && opts.collapsible);
+    const labels = (opts && opts.labels) || {};
     const c = plan.content || {};
     let html = '';
     PLAN_FIELDS.forEach(f=>{
@@ -412,10 +413,10 @@
       if (collapsible){
         const items = lines(v);
         const count = (f.list || f.grocery) ? ' <span class="mp-count">' + items.length + '</span>' : '';
-        html += '<details class="mp-plan-block mp-fold"><summary><span class="mp-fold-title">' + esc(f.label) + count + '</span>' +
+        html += '<details class="mp-plan-block mp-fold"><summary><span class="mp-fold-title">' + esc(labels[f.id] || f.label) + count + '</span>' +
           '<span class="mp-fold-preview">' + esc(items[0] || '') + '</span></summary>';
       } else {
-        html += '<div class="mp-plan-block"><h4>' + esc(f.label) + '</h4>';
+        html += '<div class="mp-plan-block"><h4>' + esc(labels[f.id] || f.label) + '</h4>';
       }
       if (f.list){
         html += '<ul>' + lines(v).map(x=> '<li>' + esc(x) + '</li>').join('') + '</ul>';
@@ -488,34 +489,13 @@
     };
   }
 
-  // The guide's steps 2-3 (Mifflin-St Jeor -> activity factor -> goal
-  // adjustment -> protein by bodyweight, fat ~30%, carbs the rest),
-  // from the questionnaire answers. A starting point for the coach to
-  // tweak, not a final number — "her real-world results over 2-3 weeks
-  // matter more than the formula."
+  // The guide's steps 2-3, worked out by the plan program
+  // (js/plan-program.js) so the coach's button, How it works and the
+  // suggested plan agree. A starting point for the coach to tweak, not a
+  // final number — "her real-world results over 2-3 weeks matter more
+  // than the formula."
   function suggestTargets(a){
-    const age = Number(a.age), h = Number(a.height_cm), w = Number(a.weight_kg);
-    if (!age || !h || !w || !a.sex) return null;
-    const exercise = String(a.exercise || '').trim();
-    const trains = !!exercise;
-    // "Gym 4x/week", "3 times a week", "5 days" -> sessions per week.
-    // 3+ sessions is "moderately active" even with a desk job; fewer (or
-    // unstated) is "lightly active".
-    const perWeek = (exercise.match(/(\d+)\s*(x|×|times|days|sessions)/i) || [])[1];
-    const bmr = 10 * w + 6.25 * h - 5 * age + (a.sex === 'Male' ? 5 : -161);
-    const factor = a.job_activity === 'Physically demanding' ? 1.725
-      : a.job_activity === 'On my feet some of the day' ? 1.55
-      : !trains ? 1.2
-      : Number(perWeek) >= 3 ? 1.55 : 1.375;
-    const goals = a.goals || [];
-    let cal = bmr * factor;
-    if (goals.includes('Lose fat')) cal -= 500;
-    else if (goals.includes('Build muscle')) cal += 250;
-    cal = Math.round(cal / 10) * 10;
-    const protein = Math.round(w * (trains ? 1.8 : 1.2));
-    const fat = Math.round(cal * 0.30 / 9);
-    const carbs = Math.max(0, Math.round((cal - protein * 4 - fat * 9) / 4));
-    return { target_calories: cal, target_protein_g: protein, target_carbs_g: carbs, target_fat_g: fat };
+    return window.MP_PROGRAM.suggestTargets(a);
   }
   const TARGET_FIELDS = [
     { id:'target_calories', label:'kcal / day' },
@@ -552,10 +532,22 @@
     };
   }
 
+  // For now the suggestion comes from the plan program (js/plan-program.js),
+  // worked out in the browser with no AI. Set to true to use Claude again
+  // (needs the server and an API key, see README.md).
+  const SUGGEST_WITH_AI = false;
   let aiBusy = {}; // memberId -> true while a request is in flight
   async function generateAi(memberId){
     const intake = S.getIntake(memberId);
     if (!intake) return;
+    if (!SUGGEST_WITH_AI){
+      try {
+        const strong = referralFlags(intake.answers).some(f=> f.strong);
+        S.saveAi(memberId, window.MP_PROGRAM.plan(intake.answers, S.getCheckins(memberId), { refer: strong ? REFER_NOTE : '' }));
+        toast('Suggested plan ready.');
+      } catch (err){ toast(err.message || 'Couldn\u2019t work out a suggested plan.'); }
+      return;
+    }
     aiBusy[memberId] = true;
     try {
       const res = await fetch('/api/ai-suggest', {
@@ -577,22 +569,25 @@
   function aiPageHtml(memberId, forCoach){
     const ai = S.getAi(memberId);
     const busy = !!aiBusy[memberId];
-    let html = '<div class="admin-notice mp-ai-note">' + (forCoach
+    const byAi = SUGGEST_WITH_AI || (ai && ai.model !== 'program');
+    let html = '<div class="admin-notice mp-ai-note">' + (!byAi ? (forCoach
+      ? 'Worked out by the app\u2019s plan program from this member\u2019s questionnaire' + (S.getCheckins(memberId).length ? ' and check-ins' : '') + ', following the gym\u2019s meal-plan guide (no AI). A starting point — <b>Copy into my plan</b> loads it into your editor so you can change anything before sending.'
+      : 'A suggested plan the app works out from your answers with the gym\u2019s guide. <b>Your coach\u2019s plan is the one to follow</b> — if something here looks useful, mention it to your coach.') : forCoach
       ? 'Drafted by AI (Claude) from this member\u2019s questionnaire' + (S.getCheckins(memberId).length ? ' and check-ins' : '') + ', following the gym\u2019s meal-plan guide. Check it before you rely on any of it — <b>Copy into my plan</b> loads it into your editor so you can change anything before sending.'
       : 'A second opinion drafted by AI (Claude) from your answers. <b>Your coach\u2019s plan is the one to follow</b> — if something here looks useful, mention it to your coach.') + '</div>';
-    const genLabel = busy ? 'Drafting… (up to a minute)' : (ai ? 'Regenerate' : 'Get AI suggestion');
+    const genLabel = busy ? 'Drafting… (up to a minute)' : SUGGEST_WITH_AI ? (ai ? 'Regenerate' : 'Get AI suggestion') : (ai ? 'Work it out again' : 'Work out a suggested plan');
     const genBtn = '<button type="button" class="btn2' + (ai ? '' : ' primary') + '" data-ai-generate' + (busy ? ' disabled' : '') + '>' + genLabel + '</button>';
     if (!ai){
-      return html + '<div class="empty-msg">No AI suggestion yet.<div class="mp-actions" style="justify-content:center;">' + genBtn + '</div></div>';
+      return html + '<div class="empty-msg">No suggested plan yet.<div class="mp-actions" style="justify-content:center;">' + genBtn + '</div></div>';
     }
     const p = ai.plan;
-    html += '<div class="day-focus">AI suggestion · generated ' + fmtDate(ai.created_at) + '</div>';
+    html += '<div class="day-focus">' + (byAi ? 'AI suggestion' : 'Suggested plan') + ' · worked out ' + fmtDate(ai.created_at) + '</div>';
     if (forCoach) html += '<div class="mp-actions mp-ai-top-actions"><button type="button" class="btn2 primary" data-ai-copy>Copy into my plan</button></div>';
     if (p.referral_note) html += '<div class="admin-notice mp-refer">' + esc(p.referral_note) + '</div>';
     html += '<div class="mp-sub-head">Daily targets</div>' + targetsHtml(p.targets, forCoach) +
       '<div class="mp-fold-bar"><button type="button" class="btn2" data-fold-all>Expand all</button></div>' +
-      planViewHtml({ content: aiToContent(p) }, { collapsible: true });
-    if (p.rationale) html += '<details class="mp-plan-block mp-fold mp-rationale"><summary><span class="mp-fold-title">How the AI got here</span>' +
+      planViewHtml({ content: aiToContent(p) }, { collapsible: true, labels: { notes: 'Notes' } });
+    if (p.rationale) html += '<details class="mp-plan-block mp-fold mp-rationale"><summary><span class="mp-fold-title">' + (byAi ? 'How the AI got here' : 'How it was worked out') + '</span>' +
       '<span class="mp-fold-preview">' + esc(p.rationale) + '</span></summary><p>' + esc(p.rationale) + '</p></details>';
     html += '<div class="mp-actions">' + genBtn + '</div>';
     return html;
@@ -692,7 +687,7 @@
       'You can still get help with general healthy-eating structure here — it\u2019s about getting you the right support, not turning you away.</div>' +
 
       '<div class="mp-plan-block"><h4>Your two pages</h4><p><b>Coach\u2019s plan</b> is the one to follow — written by your coach from these steps. ' +
-      '<b>AI suggestion</b> is a second opinion drafted by AI from the same answers and the same guide. If something there looks useful, mention it to your coach.</p></div>';
+      '<b>Suggested plan</b> is a second opinion the app works out from the same answers with the same guide. If something there looks useful, mention it to your coach.</p></div>';
   }
 
   /* ============================================================
@@ -723,7 +718,7 @@
     if (memberPage === 'diets' && !showDiets) memberPage = 'coach';
     const pageTabs = '<div class="sched-sub mp-page-tabs">' +
       (d.intake ? '<button type="button" data-mp-page="coach" class="' + (memberPage === 'coach' ? 'active' : '') + '">Coach\u2019s plan</button>' +
-        '<button type="button" data-mp-page="ai" class="' + (memberPage === 'ai' ? 'active' : '') + '">AI suggestion</button>'
+        '<button type="button" data-mp-page="ai" class="' + (memberPage === 'ai' ? 'active' : '') + '">Suggested plan</button>'
         : '<button type="button" data-mp-page="coach" class="' + (memberPage === 'coach' ? 'active' : '') + '">Questionnaire</button>') +
       '<button type="button" data-mp-page="how" class="' + (memberPage === 'how' ? 'active' : '') + '">How it works</button>' +
       (showDiets ? '<button type="button" data-mp-page="diets" class="' + (memberPage === 'diets' ? 'active' : '') + '">Try a diet</button>' : '') + '</div>';
@@ -956,7 +951,7 @@
     }
     html += '<div class="sched-sub mp-coach-tabs">' +
       ['answers','ai','plan','checkins'].map(t=> '<button type="button" data-mp-tab="' + t + '" class="' + (t === coachTab ? 'active' : '') + '">' +
-        (t === 'answers' ? 'Questionnaire' : t === 'ai' ? 'AI Suggestion' : t === 'plan' ? (d.plan ? 'Edit Plan' : 'Write Plan') : 'Check-ins (' + d.checkins.length + ')') + '</button>').join('') + '</div>';
+        (t === 'answers' ? 'Questionnaire' : t === 'ai' ? 'Suggested Plan' : t === 'plan' ? (d.plan ? 'Edit Plan' : 'Write Plan') : 'Check-ins (' + d.checkins.length + ')') + '</button>').join('') + '</div>';
 
     if (coachTab === 'answers'){
       html += answersHtml(d.intake.answers);
@@ -967,7 +962,7 @@
     } else {
       const draft = pendingDraft[memberId];
       const c = draft ? draft.content : ((d.plan && d.plan.content) || {});
-      if (draft) html += '<div class="admin-notice mp-ai-note">Pre-filled from the AI suggestion — <b>not saved yet</b>. Edit anything, then send it. <button type="button" class="btn2" id="mp-discard-draft">Discard draft</button></div>';
+      if (draft) html += '<div class="admin-notice mp-ai-note">Pre-filled from the suggested plan — <b>not saved yet</b>. Edit anything, then send it. <button type="button" class="btn2" id="mp-discard-draft">Discard draft</button></div>';
       html += '<form class="mp-form" id="mp-plan-form">' +
         '<div class="mp-sub-head" style="margin-top:0;">Daily targets</div>' + targetsEditorHtml(draft ? draft.targets : d.goals) +
         '<div class="mp-editor-grid">' + PLAN_FIELDS.map(f=> '<div class="mp-q' + (f.id === 'pattern' ? ' mp-wide' : '') + '"><label class="mp-q-label" for="mp-p-' + f.id + '">' + esc(f.label) + '</label>' +
@@ -982,7 +977,7 @@
       pendingDraft[memberId] = { content: aiToContent(ai.plan), targets: ai.plan.targets };
       coachTab = 'plan';
       renderCoachDetail();
-      toast('AI draft loaded into your editor — review it, then send.');
+      toast('Suggested plan loaded into your editor — review it, then send.');
     });
     const discard = document.getElementById('mp-discard-draft');
     if (discard) discard.addEventListener('click', ()=>{ delete pendingDraft[memberId]; renderCoachDetail(); });

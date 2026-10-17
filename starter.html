@@ -51,7 +51,7 @@
     <label>Goal <select class="mp-input" name="goal">
       <option value="gain">Gain weight / build muscle</option><option value="lose">Lose fat</option>
       <option value="recomp">Lose fat and build muscle</option><option value="maintain">Maintain</option></select></label>
-    <label>Meals a day <select class="mp-input" name="meals"><option value="3s2">3 meals + 2 snacks</option><option value="3s1">3 meals + 1 snack</option><option value="3s0">3 meals</option><option value="2s2">2 meals + 2 snacks</option></select></label>
+    <label>Meals a day <select class="mp-input" name="meals"><option value="3s2">3 meals + 2 snacks</option><option value="3s1">3 meals + 1 snack</option><option value="3s0">3 meals</option><option value="2s1">2 meals + 1 snack</option><option value="2s2">2 meals + 2 snacks</option></select></label>
     <label class="st-full">Foods they love <input class="mp-input" name="loves" placeholder="e.g. chicken, fish, beans, ugali, rice"></label>
     <label class="st-full">Digestive issues <input class="mp-input" name="gut" placeholder="none"></label>
   </form>
@@ -59,175 +59,60 @@
   <div id="st-out" class="st-out"></div>
 </main>
 
+<script src="js/plan-program.js"></script>
 <script>
 (function(){
   const $ = s => document.querySelector(s);
   const esc = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-  const r10 = n => Math.round(n / 10) * 10, r50 = n => Math.round(n / 50) * 50;
+  const P = window.MP_PROGRAM, r10 = P.r10, r50 = P.r50;
   const form = $('#st-form');
 
-  /* ---------- Energy: the guide's method (Mifflin-St Jeor × activity, ± goal) ---------- */
-  // When height or weight is missing, a typical adult of that sex in Kenya
-  // (about 158 cm for women, 170 cm for men) at a healthy BMI of 22, with a
-  // small and a large body (−6 cm, BMI 19 / +7 cm, BMI 26) for the range.
-  const TYPICAL = { Female: 158, Male: 170 };
-  const bmr = (sex, kg, cm, age) => 10 * kg + 6.25 * cm - 5 * age + (sex === 'Male' ? 5 : -161);
-  function activity(job, days){
-    let level = days >= 6 ? 3 : days >= 4 ? 2 : days >= 1 ? 1 : 0;
-    if (job === 'On my feet some of the day') level += 1;
-    if (job === 'Physically demanding') level += 2;
-    return [1.2, 1.375, 1.55, 1.725, 1.9][Math.min(level, 4)];
-  }
-  const GOAL_KCAL = { gain: 250, lose: -400, recomp: -200, maintain: 0 };
-  function bodies(v){
-    const typ = TYPICAL[v.sex];
-    if (v.height && v.weight) return { mid: { cm: v.height, kg: v.weight } };
-    const cm = v.height || typ;
-    return {
-      low:  { cm: v.height || typ - 6, kg: v.weight || 19 * Math.pow((v.height || typ - 6) / 100, 2) },
-      mid:  { cm, kg: v.weight || 22 * Math.pow(cm / 100, 2) },
-      high: { cm: v.height || typ + 7, kg: v.weight || 26 * Math.pow((v.height || typ + 7) / 100, 2) }
-    };
-  }
-  function targets(v, body){
-    const kcal = bmr(v.sex, body.kg, body.cm, v.age) * activity(v.job, v.days) + GOAL_KCAL[v.goal];
-    const floor = v.sex === 'Male' ? 1500 : 1200;
-    const cal = Math.max(floor, kcal);
-    const protein = body.kg * (v.days > 0 ? 1.8 : 1.2);
-    const fat = cal * 0.3 / 9;
-    return { cal, protein, fat, carbs: Math.max(0, (cal - protein * 4 - fat * 9) / 4) };
-  }
-
-  /* ---------- Foods: common Kenyan foods, one usual portion each (approximate) ---------- */
-  const FOODS = [
-    { k: /chicken|kuku/, name: 'Chicken stew', cat: 'protein', amt: '1 palm (about 120 g cooked)', kcal: 240, p: 30 },
-    { k: /fish|tilapia|samaki/, name: 'Fish (tilapia)', cat: 'protein', amt: '1 medium fish or 1 palm of fillet', kcal: 190, p: 32 },
-    { k: /omena|dagaa/, name: 'Omena', cat: 'protein', amt: '1 cupped hand, cooked', kcal: 200, p: 25 },
-    { k: /beef|nyama/, name: 'Beef stew', cat: 'protein', amt: '1 palm (about 120 g cooked)', kcal: 260, p: 30 },
-    { k: /pork/, name: 'Pork', cat: 'protein', amt: '1 palm (about 120 g cooked)', kcal: 290, p: 30 },
-    { k: /liver/, name: 'Liver', cat: 'protein', amt: '1 palm (about 120 g cooked)', kcal: 210, p: 30 },
-    { k: /green ?grams|ndengu|lentil/, name: 'Ndengu (green grams)', cat: 'protein', amt: '1½ cups cooked', kcal: 300, p: 20 },
-    { k: /beans|maharagwe|githeri/, name: 'Beans', cat: 'protein', amt: '1½ cups cooked', kcal: 340, p: 22 },
-    { k: /egg/, name: 'Eggs', cat: 'protein', amt: '2–3 eggs', kcal: 200, p: 16 },
-    { k: /ugali/, name: 'Ugali', cat: 'starch', amt: '1 fist-sized piece', kcal: 240, p: 5 },
-    { k: /rice|wali|pilau/, name: 'Rice', cat: 'starch', amt: '1 cup cooked (1 fist)', kcal: 210, p: 4 },
-    { k: /waru|potato|viazi/, name: 'Waru (boiled potatoes)', cat: 'starch', amt: '2 medium potatoes', kcal: 220, p: 5 },
-    { k: /chap/, name: 'Chapati', cat: 'starch', amt: '1 chapati', kcal: 270, p: 6 },
-    { k: /sweet potato|ngwaci/, name: 'Sweet potato', cat: 'starch', amt: '1 medium', kcal: 180, p: 3 },
-    { k: /matoke|banana stew/, name: 'Matoke', cat: 'starch', amt: '2 fingers, stewed', kcal: 220, p: 3 }
-  ];
-  const BREAKFAST = [
-    ['Tea with milk', '1 mug', 90, 4], ['Bread with peanut butter', '2 slices + 1 tablespoon', 260, 10], ['Eggs', '2 eggs, boiled or fried in a little oil', 170, 12]
-  ];
-  const SNACK_A = [['Banana', '1', 105, 1], ['Groundnuts', '1 small handful (30 g)', 170, 7]];
-  const SNACK_B = [['Mala or yoghurt', '1 cup (250 ml)', 150, 8], ['A fruit in season', 'mango, pawpaw or 2 oranges', 90, 1]];
-  const VEG = ['Sukuma wiki, cabbage or managu', '1–2 fists, cooked with a little oil', 70, 3];
-
-  function pick(loves, cat){
-    const list = FOODS.filter(f => f.cat === cat && f.k.test(loves));
-    const fallback = FOODS.filter(f => f.cat === cat && (cat === 'protein' ? /beans|chicken|egg/ : /ugali|rice/).test(f.name.toLowerCase()));
-    return list.length ? list : fallback;
-  }
-
-  // A day built from what they love: protein + starch + vegetables at lunch
-  // and dinner, starch portions scaled to land near the calorie target.
-  function sampleDay(v, t){
-    const loves = (v.loves || '').toLowerCase();
-    const prot = pick(loves, 'protein'), starch = pick(loves, 'starch');
-    const meals = [];
-    const [nMeals, nSnacks] = [+v.meals[0], +v.meals[2]];
-    if (nMeals === 3) meals.push({ name: 'Breakfast', items: BREAKFAST.map(x => x.slice()) });
-    if (nSnacks >= 1) meals.push({ name: nMeals === 3 ? 'Mid-morning snack' : 'Morning snack', items: SNACK_A.map(x => x.slice()) });
-    const plate = (name, i) => {
-      const P = prot[i % prot.length], S = starch[(i + 1) % starch.length];
-      return { name, plate: true, items: [[P.name, P.amt, P.kcal, P.p], [S.name, S.amt, S.kcal, S.p], VEG.slice()] };
-    };
-    meals.push(plate('Lunch', 0));
-    if (nSnacks >= 2) meals.push({ name: 'Afternoon snack', items: SNACK_B.map(x => x.slice()) });
-    meals.push(plate('Dinner', 1));
-    // Scale the starch at lunch and dinner (½× to 2×) towards the target.
-    const total = () => meals.reduce((s, m) => s + m.items.reduce((a, x) => a + x[2], 0), 0);
-    const plates = meals.filter(m => m.plate);
-    const starchKcal = plates.reduce((s, m) => s + m.items[1][2], 0);
-    const k = Math.min(2, Math.max(0.5, 1 + (t.cal - total()) / starchKcal));
-    const step = Math.round(k * 2) / 2;
-    plates.forEach(m => {
-      const s = m.items[1];
-      s[2] = Math.round(s[2] * step); s[3] = Math.round(s[3] * step);
-      if (step !== 1) s[1] = (step === 0.5 ? 'half of: ' : step + '× ') + s[1];
-    });
-    return { meals, kcal: total(), protein: meals.reduce((s, m) => s + m.items.reduce((a, x) => a + x[3], 0), 0) };
-  }
-
-  /* ---------- Render ---------- */
+  // The form -> the plan program's inputs (js/plan-program.js does the maths).
   function read(){
     const f = form.elements, n = x => parseFloat(String(x).replace(',', '.')) || 0;
     return { age: n(f.age.value) || 25, sex: f.sex.value, height: n(f.height.value), weight: n(f.weight.value), job: f.job.value,
-      days: Math.min(7, Math.round(n(f.days.value))), goal: f.goal.value, meals: f.meals.value, loves: f.loves.value.trim(), gut: f.gut.value.trim() };
+      days: Math.min(7, Math.round(n(f.days.value))), goal: f.goal.value, meals: +f.meals.value[0], snacks: +f.meals.value[2],
+      loves: f.loves.value.trim(), avoid: '', diet: '', gut: f.gut.value.trim(), target: '', typical: {} };
   }
 
   function render(){
-    const v = read(), B = bodies(v), mid = targets(v, B.mid);
-    const ranged = !!B.low, lo = ranged && targets(v, B.low), hi = ranged && targets(v, B.high);
+    const v = read(), R = P.build(v, []), t = R.t, mid = R.B.mid, h = P.hands(v), rule = P.weeklyRule(v);
     const missing = [!v.height && 'height', !v.weight && 'weight'].filter(Boolean);
-    const day = sampleDay(v, mid);
-    const gain = v.goal === 'gain';
-    const hands = v.sex === 'Male'
-      ? { p: '2 palms', s: '2 cupped hands', v: '2 fists', f: '2 thumbs' }
-      : { p: '1 palm', s: '1 cupped hand', v: '1–2 fists', f: '1 thumb' };
     const num = (val, unit, label, a, b) => '<div><span class="mp-t-num">' + val + unit + '</span><span class="mp-t-lbl">' + label + '</span>' +
-      (ranged ? '<div class="st-range">' + a + '–' + b + unit + '</div>' : '') + '</div>';
-    let h = '<div class="mp-section-head">1. Daily targets to start with</div>';
-    if (ranged) h += '<p><span class="st-est">Estimate</span> No ' + missing.join(' or ') + ' yet, so this assumes a typical ' + (v.sex === 'Male' ? 'man' : 'woman') +
-      ' (about ' + Math.round(B.mid.cm) + ' cm, ' + Math.round(B.mid.kg) + ' kg). The small numbers are the range for a smaller or larger body. <b>Start on the big number</b>; ' +
+      (R.ranged ? '<div class="st-range">' + a + '–' + b + unit + '</div>' : '') + '</div>';
+    let out = '<div class="mp-section-head">1. Daily targets to start with</div>';
+    if (R.ranged) out += '<p><span class="st-est">Estimate</span> No ' + missing.join(' or ') + ' yet, so this assumes a typical ' + (v.sex === 'Male' ? 'man' : 'woman') +
+      ' (about ' + Math.round(mid.cm) + ' cm, ' + Math.round(mid.kg) + ' kg). The small numbers are the range for a smaller or larger body. <b>Start on the big number</b>; ' +
       'the weekly check below corrects it within 2–3 weeks. Add ' + missing.join(' and ') + ' to make it exact.</p>';
-    h += '<div class="mp-targets">' +
-      num(r50(mid.cal), '', 'kcal / day', ranged && r50(lo.cal), ranged && r50(hi.cal)) +
-      num(r10(mid.protein), 'g', 'protein', ranged && r10(lo.protein), ranged && r10(hi.protein)) +
-      num(r10(mid.carbs), 'g', 'carbs', ranged && r10(lo.carbs), ranged && r10(hi.carbs)) +
-      num(r10(mid.fat), 'g', 'fat', ranged && r10(lo.fat), ranged && r10(hi.fat)) + '</div>';
-    h += '<p class="field-hint">Mifflin-St Jeor × ' + activity(v.job, v.days) + ' activity (' + esc(v.job.toLowerCase()) + ', ' + v.days + ' exercise day' + (v.days === 1 ? '' : 's') + ' a week)' +
-      (GOAL_KCAL[v.goal] ? ', ' + (GOAL_KCAL[v.goal] > 0 ? '+' : '') + GOAL_KCAL[v.goal] + ' kcal for the goal' : '') + '. Protein ' + (v.days > 0 ? '1.8' : '1.2') + ' g per kg, fat 30%, carbs the rest.</p>';
+    out += '<div class="mp-targets">' +
+      num(r50(t.cal), '', 'kcal / day', R.ranged && r50(R.lo.cal), R.ranged && r50(R.hi.cal)) +
+      num(r10(t.protein), 'g', 'protein', R.ranged && r10(R.lo.protein), R.ranged && r10(R.hi.protein)) +
+      num(r10(t.carbs), 'g', 'carbs', R.ranged && r10(R.lo.carbs), R.ranged && r10(R.hi.carbs)) +
+      num(r10(t.fat), 'g', 'fat', R.ranged && r10(R.lo.fat), R.ranged && r10(R.hi.fat)) + '</div>';
+    out += '<p class="field-hint">Mifflin-St Jeor × ' + P.activity(v.job, v.days) + ' activity (' + esc(v.job.toLowerCase()) + ', ' + v.days + ' exercise day' + (v.days === 1 ? '' : 's') + ' a week)' +
+      (P.GOAL_KCAL[v.goal] ? ', ' + (P.GOAL_KCAL[v.goal] > 0 ? '+' : '') + P.GOAL_KCAL[v.goal] + ' kcal for the goal' : '') + '. Protein ' + (v.days > 0 ? '1.8' : '1.2') + ' g per kg, fat 30%, carbs the rest.</p>';
 
-    h += '<div class="mp-section-head">2. Portions without numbers — every main meal</div><ul>' +
-      '<li><b>Protein:</b> ' + hands.p + ' (chicken, fish, beef, liver, eggs) or 1½ cups of beans / ndengu</li>' +
-      '<li><b>Starch:</b> ' + hands.s + (gain ? ' — <b>plus an extra half to one</b> at lunch or dinner to gain' : v.goal === 'lose' ? ' (no extra helpings)' : '') + '</li>' +
-      '<li><b>Vegetables:</b> ' + hands.v + ' (sukuma, cabbage, managu, tomatoes, carrots)</li>' +
-      '<li><b>Fat:</b> ' + hands.f + ' (cooking oil, avocado, groundnuts, peanut butter)</li></ul>';
+    out += '<div class="mp-section-head">2. Portions without numbers — every main meal</div><ul>' +
+      '<li><b>Protein:</b> ' + h.p + ' (chicken, fish, beef, liver, eggs) or 1½ cups of beans / ndengu</li>' +
+      '<li><b>Starch:</b> ' + h.s + (v.goal === 'gain' ? ' — <b>plus an extra half to one</b> at lunch or dinner to gain' : v.goal === 'lose' ? ' (no extra helpings)' : '') + '</li>' +
+      '<li><b>Vegetables:</b> ' + h.veg + ' (sukuma, cabbage, managu, tomatoes, carrots)</li>' +
+      '<li><b>Fat:</b> ' + h.f + ' (cooking oil, avocado, groundnuts, peanut butter)</li></ul>';
 
-    h += '<div class="mp-section-head">3. A day built from what they love</div>' +
-      '<div class="st-total">This day: <b>' + r10(day.kcal) + ' kcal</b> · <b>' + day.protein + ' g protein</b> · target ' + r50(mid.cal) + ' kcal / ' + r10(mid.protein) + ' g</div>';
-    day.meals.forEach(m => {
-      const k = m.items.reduce((a, x) => a + x[2], 0);
-      h += '<div class="st-meal"><h4>' + esc(m.name) + '<span>≈ ' + r10(k) + ' kcal</span></h4><ul>' +
-        m.items.map(x => '<li>' + esc(x[0]) + ' <span class="st-hand">— ' + esc(x[1]) + '</span></li>').join('') + '</ul></div>';
+    out += '<div class="mp-section-head">3. A day built from what they love</div>' +
+      '<div class="st-total">This day: <b>' + r10(R.dayKcal) + ' kcal</b> · <b>' + Math.round(R.dayProtein) + ' g protein</b> · target ' + r50(t.cal) + ' kcal / ' + r10(t.protein) + ' g</div>';
+    R.day.forEach(m => {
+      out += '<div class="st-meal"><h4>' + esc(m.name) + '<span>≈ ' + r10(m.items.reduce((a, x) => a + x.kcal, 0)) + ' kcal</span></h4><ul>' +
+        m.items.map(x => '<li>' + esc(x.text) + '</li>').join('') + '</ul></div>';
     });
-    h += '<p class="field-hint">Swap within a row any day (chicken ↔ fish ↔ beans, ugali ↔ rice ↔ waru). Calories are rough averages; the weekly check takes care of the difference.' +
-      (day.protein < mid.protein - 15 ? ' Protein is a little under target: add an egg at a snack or a glass of mala.' : '') + '</p>';
+    out += '<p class="field-hint">Swap within a row any day (chicken ↔ fish ↔ beans, ugali ↔ rice ↔ waru). Calories are rough averages; the weekly check takes care of the difference.' +
+      (R.dayProtein < t.protein - 15 ? ' Protein is a little under target: add an egg at a snack or a glass of mala.' : '') + '</p>';
 
-    const rate = gain ? 'gain 0.25–0.5 kg a week' : v.goal === 'lose' ? 'lose 0.25–0.75 kg a week' : 'stay within 1 kg';
-    h += '<div class="mp-section-head">4. The weekly check — this is what makes it accurate</div>' +
-      '<p>Weigh 2 mornings a week (same scale, after the toilet, before eating) and compare the weekly average. Aim to <b>' + rate + '</b>.</p>' +
-      '<table class="st-adj"><tr><th>After 2 weeks</th><th>Change</th></tr>' +
-      (gain
-        ? '<tr><td>Gaining less than 0.25 kg a week</td><td>Add about 150–200 kcal: an extra cupped hand of ugali or rice at dinner, or a banana + groundnuts snack</td></tr>' +
-          '<tr><td>0.25–0.5 kg a week</td><td>Keep going</td></tr>' +
-          '<tr><td>More than 0.5 kg a week, or the tummy growing fast</td><td>Take away about 150 kcal (half the extra starch)</td></tr>'
-        : v.goal === 'lose' || v.goal === 'recomp'
-          ? '<tr><td>No change</td><td>Take away about 150 kcal: half a cupped hand of starch at dinner</td></tr><tr><td>On target</td><td>Keep going</td></tr><tr><td>Losing faster, or tired and hungry</td><td>Add about 150 kcal back</td></tr>'
-          : '<tr><td>Moving more than 1 kg</td><td>Adjust by 150 kcal in the other direction</td></tr>') + '</table>';
-    if (gain) h += '<p>For glutes and hips, the food only works with the training: keep the 3 gym days with squats, hip thrusts and lunges, getting a little heavier over time. A flatter tummy comes mostly from less bloating (below) and from gaining slowly, not fast.</p>';
-
-    if (/bloat|constip|gas|reflux|heartburn|stomach/i.test(v.gut) && !/^\s*(none|no)\s*$/i.test(v.gut)){
-      h += '<div class="mp-section-head">5. For the bloating and constipation</div><ul>' +
-        '<li>Drink water through the day: about 8 glasses (2 litres), more on gym days.</li>' +
-        '<li>Vegetables at lunch and dinner and a fruit a day, but add fibre <b>slowly</b> over 2–3 weeks; a sudden jump makes bloating worse.</li>' +
-        '<li>Soak beans and ndengu overnight, pour the water away and cook them well; start with smaller portions and build up.</li>' +
-        '<li>Eat at regular times, chew slowly, and walk for 10 minutes after the evening meal.</li>' +
-        '<li>Keep a short note of what was eaten on the worst bloating days; milk, beans or fried food are common triggers.</li>' +
-        '<li>If constipation carries on for more than 3 weeks, or there is pain, blood, or weight loss without trying, see a doctor.</li></ul>';
-    }
-    $('#st-out').innerHTML = h;
+    out += '<div class="mp-section-head">4. The weekly check — this is what makes it accurate</div>' +
+      '<p>Weigh 2 mornings a week (same scale, after the toilet, before eating) and compare the weekly average. Aim to <b>' + rule.aim + '</b>.</p>' +
+      '<table class="st-adj"><tr><th>After 2 weeks</th><th>Change</th></tr>' + rule.rows.map(r => '<tr><td>' + esc(r[0]) + '</td><td>' + esc(r[1]) + '</td></tr>').join('') + '</table>';
+    if (v.goal === 'gain') out += '<p>For glutes and hips, the food only works with the training: squats, hip thrusts and lunges, getting a little heavier over time. A flatter tummy comes mostly from less bloating (below) and from gaining slowly, not fast.</p>';
+    if (P.hasGutIssue(v.gut)) out += '<div class="mp-section-head">5. For the digestion</div><ul>' + P.GUT_TIPS.map(x => '<li>' + esc(x) + '</li>').join('') + '</ul>';
+    $('#st-out').innerHTML = out;
   }
   form.addEventListener('input', render);
   form.addEventListener('change', render);
@@ -240,7 +125,6 @@
     s.onerror = () => rej(new Error('Couldn’t load the PDF reader — check your internet connection.'));
     document.head.appendChild(s);
   });
-  const DAYS = /mon|tue|wed|thu|fri|sat|sun/gi;
   $('#st-file').addEventListener('change', async e => {
     const file = e.target.files[0]; e.target.value = '';
     if (!file) return;
@@ -252,22 +136,19 @@
       const val = n => F[n] && F[n][0] && F[n][0].value != null ? String(F[n][0].value).trim() : '';
       const on = n => { const x = val(n); return x && x !== 'Off'; };
       if (!Object.keys(F).length) throw new Error('This PDF isn’t the fillable questionnaire.');
-      const f = form.elements, n = x => (String(x).match(/\d+(\.\d+)?/) || [''])[0];
-      f.age.value = n(val('basics_1')); f.height.value = n(val('basics_2')); f.weight.value = n(val('basics_3'));
-      if (on('q2_4')) f.sex.value = 'Female'; if (on('q2_5')) f.sex.value = 'Male';
-      ['q6_13', 'q6_14', 'q6_15'].forEach((k, i) => { if (on(k)) f.job.selectedIndex = i; });
-      const ex = val('q7'), days = (ex.match(DAYS) || []).length || +(ex.match(/(\d)\s*(x|times|days)/i) || [])[1] || 0;
-      f.days.value = days;
-      const goals = ['Lose fat', 'Build muscle', 'Maintain weight'].filter((g, i) => on('q4_' + (6 + i)));
-      const wantsGain = /gain|bulk|add weight|put on/i.test(val('q5'));
-      f.goal.value = goals.includes('Lose fat') && goals.includes('Build muscle') ? 'recomp' : goals.includes('Lose fat') ? 'lose'
-        : goals.includes('Build muscle') || wantsGain ? 'gain' : 'maintain';
-      f.loves.value = val('q15');
-      f.gut.value = val('q12');
-      const snacks = /snack/i.test(val('q25')) ? '3s2' : on('q18_31') ? '3s2' : '3s1';
-      f.meals.value = snacks;
+      // The same answers the app would read, then the program's view of them.
+      const a = {
+        age: val('basics_1'), height_cm: val('basics_2'), weight_kg: val('basics_3'),
+        sex: on('q2_5') ? 'Male' : 'Female', exercise: val('q7'), target: val('q5'), loves: val('q15'), digestion: val('q12'), anything_else: val('q25'),
+        job_activity: ['Mostly sitting', 'On my feet some of the day', 'Physically demanding'].find((x, i) => on('q6_' + (13 + i))) || 'Mostly sitting',
+        goals: ['Lose fat', 'Build muscle', 'Maintain weight'].filter((x, i) => on('q4_' + (6 + i))),
+        meals_per_day: ['1', '2', '3', '4 or more'].find((x, i) => on('q18_' + (28 + i))) || ''
+      };
+      const v = P.fromAnswers(a), f = form.elements;
+      f.age.value = v.age || ''; f.height.value = v.height || ''; f.weight.value = v.weight || ''; f.sex.value = v.sex; f.job.value = v.job;
+      f.days.value = v.days; f.goal.value = v.goal; f.meals.value = v.meals + 's' + v.snacks; f.loves.value = v.loves; f.gut.value = v.gut;
       render();
-      say('Filled in from ' + esc(file.name) + (n(val('basics_2')) && n(val('basics_3')) ? '.' : ' — <b>no ' + [!n(val('basics_2')) && 'height', !n(val('basics_3')) && 'weight'].filter(Boolean).join(' or ') + '</b>, so the targets are an estimate.') + ' Check the boxes; change anything and it updates.', 'ok');
+      say('Filled in from ' + esc(file.name) + (v.height && v.weight ? '.' : ' — <b>no ' + [!v.height && 'height', !v.weight && 'weight'].filter(Boolean).join(' or ') + '</b>, so the targets are an estimate.') + ' Check the boxes; change anything and it updates.', 'ok');
     } catch (err){ say(esc(err.message || 'Couldn’t read that PDF.'), 'warn'); }
   });
 

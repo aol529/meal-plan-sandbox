@@ -788,7 +788,7 @@
         weight_kg: (d.goals && d.goals.weight_kg) || me.weight || ''
       };
       memberBody.innerHTML = head + pageTabs +
-        '<div class="day-focus">' + (d.intake ? 'Update your answers' : 'Step 1 — tell your coach about you') + '</div>' +
+        '<div class="day-focus">' + (d.intake ? (d.plan ? 'Update your answers' : 'Step 1 — change your answers') : 'Step 1 — tell your coach about you') + '</div>' +
         '<div class="admin-notice">Fill in as much as you can. Your answers help your coach build a plan that fits your goals, tastes and daily routine. Only your coach and the gym admin can see them.' +
         (me.trainerId ? ' Your coach: <b>' + esc(nameOf(me.trainerId)) + '</b>.' : ' <b>You don’t have a coach assigned yet</b> — until then it goes to the admin.') + '</div>' +
         importBoxHtml() + questionnaireFormHtml(prefill) +
@@ -822,7 +822,8 @@
       html += aiPageHtml(me.id, false);
     } else if (!d.plan){
       html += '<div class="day-focus">Step 2 — your coach is building your plan</div>' +
-        '<div class="empty-msg">Your answers are with your coach (sent ' + fmtDate(d.intake.submitted_at) + '). You’ll get a notification when your plan is ready.</div>';
+        '<div class="empty-msg">Your answers are with your coach (sent ' + fmtDate(d.intake.submitted_at) + '). You’ll get a notification when your plan is ready.' +
+        '<div class="mp-actions" style="justify-content:center;"><button type="button" class="btn2" id="mp-back-step1">← Back to step 1: change my answers</button></div></div>';
     } else {
       html += '<div class="day-focus">Your plan · updated ' + fmtDate(d.plan.updated_at) + (d.plan.coach_id ? ' by ' + esc(nameOf(d.plan.coach_id)) : '') + '</div>' +
         '<div class="mp-sub-head">Daily targets</div>' + targetsHtml(d.goals, false) +
@@ -843,7 +844,10 @@
 
     wirePageTabs();
     wireAi(memberBody, me.id, renderMember);
-    document.getElementById('mp-edit-intake').addEventListener('click', ()=>{ memberMode = 'edit'; renderMember(); });
+    const toStep1 = ()=>{ memberMode = 'edit'; renderMember(); window.scrollTo({ top: 0, behavior: 'smooth' }); };
+    document.getElementById('mp-edit-intake').addEventListener('click', toStep1);
+    const back = document.getElementById('mp-back-step1');
+    if (back) back.addEventListener('click', toStep1);
     const ciForm = document.getElementById('mp-checkin-form');
     if (ciForm) ciForm.addEventListener('submit', async (e)=>{
       e.preventDefault();

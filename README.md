@@ -22,6 +22,14 @@ The questionnaire page has **Upload PDF or photos**:
 
 Either way the answers only fill the form, marked in green; nothing is saved until the member checks them and presses Send.
 
+## Starter estimate
+`starter.html` (http://localhost:3001/starter.html): a starting point a client can follow right away, even with height or weight missing. Upload the questionnaire PDF (or type the answers) and it gives:
+- daily calories and macros by the guide's method (Mifflin-St Jeor × activity ± goal); without height/weight it assumes a typical adult of that sex in Kenya (about 158 cm women / 170 cm men, BMI 22) and shows the range for a smaller or larger body
+- hand portions that need no numbers, and a sample day built from the foods they love, scaled to the target
+- the weekly weigh-in rule that corrects the estimate, and gut-comfort notes when they mention bloating or constipation
+
+Nothing is saved or sent anywhere.
+
 ## Files
 - `js/mealplan.js` — copied from the gym app's `js/bells-n-barz-mealplan.js`; only the Supabase calls are swapped for `MP_STORE`.
 - `js/store.js` — localStorage stand-in for the `meal_plan_*`, `nutrition_goals` and `notifications` tables, with the same access rule as the gym app's `sql/45-meal-plans.sql`.

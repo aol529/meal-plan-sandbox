@@ -402,6 +402,45 @@
   // opts.collapsible: each block becomes a <details>, closed by default,
   // whose summary shows the title, item count and a one-line preview —
   // used on the AI page, where the plan is long and is mostly skimmed.
+  /* ---------------- DOWNLOAD AS PDF ----------------
+     A clean, light copy of a plan for the browser's print box, where
+     "Save as PDF" downloads it (phones too). Only #mp-print shows while
+     printing (see "Download as PDF" in css/style.css); the page title
+     becomes the PDF's file name. */
+  function printPlan(o){
+    let box = document.getElementById('mp-print');
+    if (!box){ box = document.createElement('div'); box.id = 'mp-print'; document.body.appendChild(box); }
+    const t = o.targets;
+    const labels = o.labels || {};
+    let html = '<div class="pp-head"><div class="pp-brand">Meal Plan</div><h1>' + esc(o.who) + '</h1>' +
+      '<div class="pp-sub">' + esc(o.kind) + ' · ' + esc(o.date) + '</div></div>';
+    if (o.referral) html += '<div class="pp-note">' + esc(o.referral) + '</div>';
+    if (t && t.target_calories) html += '<div class="pp-targets">' +
+      [[t.target_calories, 'kcal a day'], [t.target_protein_g + ' g', 'protein'], [t.target_carbs_g + ' g', 'carbs'], [t.target_fat_g + ' g', 'fat']]
+        .map(x=> '<div><b>' + esc(x[0]) + '</b><span>' + x[1] + '</span></div>').join('') + '</div>';
+    PLAN_FIELDS.forEach(f=>{
+      const v = (o.content || {})[f.id];
+      if (!v || !String(v).trim()) return;
+      html += '<section class="pp-block"><h2>' + esc(labels[f.id] || f.label) + '</h2>';
+      if (f.list) html += '<ul>' + lines(v).map(x=> '<li>' + esc(x) + '</li>').join('') + '</ul>';
+      else if (f.grocery) html += lines(v).map(line=>{
+        const i = line.indexOf(':');
+        return '<p>' + (i > 0 ? '<b>' + esc(line.slice(0, i)) + ':</b> ' + esc(line.slice(i + 1).trim()) : esc(line)) + '</p>';
+      }).join('');
+      else html += '<p>' + esc(v).replace(/\n/g, '<br>') + '</p>';
+      html += '</section>';
+    });
+    if (o.rationale) html += '<section class="pp-block"><h2>How it was worked out</h2><p>' + esc(o.rationale) + '</p></section>';
+    html += '<div class="pp-foot">Printed ' + fmtDate(new Date().toISOString()) + '</div>';
+    box.innerHTML = html;
+    const title = document.title;
+    document.title = 'Meal plan - ' + o.who + ' - ' + o.date;
+    document.body.classList.add('mp-printing');
+    const done = ()=>{ document.body.classList.remove('mp-printing'); document.title = title; window.removeEventListener('afterprint', done); };
+    window.addEventListener('afterprint', done);
+    window.print();
+  }
+
   function planViewHtml(plan, opts){
     const collapsible = !!(opts && opts.collapsible);
     const labels = (opts && opts.labels) || {};
@@ -582,7 +621,8 @@
     }
     const p = ai.plan;
     html += '<div class="day-focus">' + (byAi ? 'AI suggestion' : 'Suggested plan') + ' · worked out ' + fmtDate(ai.created_at) + '</div>';
-    if (forCoach) html += '<div class="mp-actions mp-ai-top-actions"><button type="button" class="btn2 primary" data-ai-copy>Copy into my plan</button></div>';
+    html += '<div class="mp-actions mp-ai-top-actions">' + (forCoach ? '<button type="button" class="btn2 primary" data-ai-copy>Copy into my plan</button>' : '') +
+      '<button type="button" class="btn2" data-plan-pdf>Download PDF</button></div>';
     if (p.referral_note) html += '<div class="admin-notice mp-refer">' + esc(p.referral_note) + '</div>';
     html += '<div class="mp-sub-head">Daily targets</div>' + targetsHtml(p.targets, forCoach) +
       '<div class="mp-fold-bar"><button type="button" class="btn2" data-fold-all>Expand all</button></div>' +
@@ -612,6 +652,12 @@
       rerender();          // shows the "Drafting…" state
       await p;
       rerender();
+    });
+    const pdf = container.querySelector('[data-plan-pdf]');
+    if (pdf) pdf.addEventListener('click', ()=>{
+      const ai = S.getAi(memberId);
+      printPlan({ who: nameOf(memberId), kind: 'Suggested plan', date: fmtDate(ai.created_at), targets: ai.plan.targets,
+        content: aiToContent(ai.plan), labels: { notes: 'Notes' }, referral: ai.plan.referral_note, rationale: onCopy ? ai.plan.rationale : '' });
     });
     const copy = container.querySelector('[data-ai-copy]');
     if (copy && onCopy) copy.addEventListener('click', ()=> onCopy(S.getAi(memberId)));
@@ -821,6 +867,7 @@
         '<div class="mp-actions" style="justify-content:center;"><button type="button" class="btn2" id="mp-back-step1">← Back to step 1: change my answers</button></div></div>';
     } else {
       html += '<div class="day-focus">Your plan · updated ' + fmtDate(d.plan.updated_at) + (d.plan.coach_id ? ' by ' + esc(nameOf(d.plan.coach_id)) : '') + '</div>' +
+        '<div class="mp-actions mp-ai-top-actions"><button type="button" class="btn2" id="mp-plan-pdf">Download PDF</button></div>' +
         '<div class="mp-sub-head">Daily targets</div>' + targetsHtml(d.goals, false) +
         planViewHtml(d.plan);
 
@@ -839,6 +886,9 @@
 
     wirePageTabs();
     wireAi(memberBody, me.id, renderMember);
+    const planPdf = document.getElementById('mp-plan-pdf');
+    if (planPdf) planPdf.addEventListener('click', ()=> printPlan({ who: nameOf(me.id),
+      kind: 'Coach\u2019s plan' + (d.plan.coach_id ? ' by ' + nameOf(d.plan.coach_id) : ''), date: fmtDate(d.plan.updated_at), targets: d.goals, content: d.plan.content }));
     const toStep1 = ()=>{ memberMode = 'edit'; renderMember(); window.scrollTo({ top: 0, behavior: 'smooth' }); };
     document.getElementById('mp-edit-intake').addEventListener('click', toStep1);
     const back = document.getElementById('mp-back-step1');
@@ -969,6 +1019,7 @@
           '<div class="field-hint mp-q-hint">' + esc(f.hint) + '</div>' +
           '<textarea class="mp-input" id="mp-p-' + f.id + '" name="' + f.id + '" rows="' + f.rows + '">' + esc(c[f.id]) + '</textarea></div>').join('') + '</div>' +
         '<div class="mp-actions"><button type="submit" class="btn2 primary">' + (d.plan ? 'Save & notify member' : 'Send plan to member') + '</button>' +
+        '<button type="button" class="btn2" id="mp-plan-pdf">Download PDF</button>' +
         (d.plan ? '<span class="field-hint">Last saved ' + fmtDate(d.plan.updated_at) + '</span>' : '') + '</div></form>';
     }
     el.innerHTML = html;
@@ -992,6 +1043,15 @@
       coachTab = b.getAttribute('data-mp-tab'); renderCoachDetail();
     }));
     const form = document.getElementById('mp-plan-form');
+    const planPdf = document.getElementById('mp-plan-pdf');
+    if (planPdf) planPdf.addEventListener('click', ()=>{
+      const content = {}, goals = {};
+      PLAN_FIELDS.forEach(f=>{ content[f.id] = form.querySelector('[name="' + f.id + '"]').value.trim(); });
+      TARGET_FIELDS.forEach(f=>{ const v = form.querySelector('[name="' + f.id + '"]').value; goals[f.id] = v === '' ? null : Number(v); });
+      const saved = d.plan && !pendingDraft[memberId] && PLAN_FIELDS.every(f=> (d.plan.content[f.id] || '').trim() === content[f.id]);
+      printPlan({ who: nameOf(memberId), kind: 'Coach\u2019s plan by ' + nameOf(S.me().id) + (saved ? '' : ' (draft, not sent yet)'),
+        date: fmtDate(saved ? d.plan.updated_at : new Date().toISOString()), targets: TARGET_FIELDS.every(f=> goals[f.id] != null) ? goals : null, content });
+    });
     if (form) form.addEventListener('submit', async (e)=>{
       e.preventDefault();
       const content = {};

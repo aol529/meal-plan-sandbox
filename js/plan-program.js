@@ -125,12 +125,15 @@ window.MP_PROGRAM = (function(){
   const half = q => (Math.floor(q) ? Math.floor(q) : '') + (q % 1 ? '½' : '') || '0';
   const starchText = (s, step) => { const q = s.q * step; return s.name.toLowerCase() + ' (' + half(q) + ' ' + (q > 1 ? s.many : s.one) + ')'; };
   // sShift pairs each protein with a different starch, so dinners aren't lunches again.
-  function plates(v, n, offset, sShift, step){
+  // seen (shared by lunches and dinners) skips pairs already used, until
+  // the foods run out; then repeats are fine.
+  function plates(v, n, offset, sShift, step, seen){
     const P = choices(v, PROTEINS, /beans|chicken|eggs|ndengu|fish/), S = choices(v, STARCHES, /ugali|rice|sweet potato|chapati/);
-    const out = [], seen = {};
-    for (let i = 0; out.length < n && i < n * 4; i++){
+    const out = [];
+    seen = seen || {};
+    for (let i = 0; out.length < n && i < n * 4 + P.length * S.length; i++){
       const p = P[(i + offset) % P.length], s = S[(i + offset + sShift + Math.floor(i / P.length)) % S.length];
-      if (seen[p.name + s.name]) continue;
+      if (seen[p.name + s.name] && i < P.length * S.length) continue;
       seen[p.name + s.name] = 1;
       out.push({ pf: p, sf: s, text: p.name + ' (' + p.amt + ') + ' + starchText(s, step) + ' + ' + VEG.text,
         kcal: p.kcal + s.kcal * step + VEG.kcal, p: p.p + s.p * step + VEG.p });
@@ -168,7 +171,7 @@ window.MP_PROGRAM = (function(){
     const fixed = (v.meals >= 3 && breakfasts[0] ? breakfasts[0].kcal : 0) + snacks.slice(0, v.snacks).reduce((s, x) => s + x.kcal, 0);
     const starchK = base.sf.kcal + base2.sf.kcal;
     const step = Math.min(2, Math.max(0.5, Math.round((1 + (t.cal - fixed - base.kcal - base2.kcal) / starchK) * 2) / 2));
-    const lunches = plates(v, 4, 0, 1, step), dinners = plates(v, 5, 1, 3, step);
+    const used = {}, lunches = plates(v, 4, 0, 1, step, used), dinners = plates(v, 5, 1, 3, step, used);
 
     const day = [];
     if (v.meals >= 3 && breakfasts[0]) day.push({ name: 'Breakfast', items: [breakfasts[0]] });

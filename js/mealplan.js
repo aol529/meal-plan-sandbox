@@ -723,7 +723,8 @@
     if (memberPage === 'diets' && !showDiets) memberPage = 'coach';
     const pageTabs = '<div class="sched-sub mp-page-tabs">' +
       (d.intake ? '<button type="button" data-mp-page="coach" class="' + (memberPage === 'coach' ? 'active' : '') + '">Coach\u2019s plan</button>' +
-        '<button type="button" data-mp-page="ai" class="' + (memberPage === 'ai' ? 'active' : '') + '">AI suggestion</button>' : '') +
+        '<button type="button" data-mp-page="ai" class="' + (memberPage === 'ai' ? 'active' : '') + '">AI suggestion</button>'
+        : '<button type="button" data-mp-page="coach" class="' + (memberPage === 'coach' ? 'active' : '') + '">Questionnaire</button>') +
       '<button type="button" data-mp-page="how" class="' + (memberPage === 'how' ? 'active' : '') + '">How it works</button>' +
       (showDiets ? '<button type="button" data-mp-page="diets" class="' + (memberPage === 'diets' ? 'active' : '') + '">Try a diet</button>' : '') + '</div>';
     const wirePageTabs = ()=> memberBody.querySelectorAll('[data-mp-page]').forEach(b=> b.addEventListener('click', ()=>{
@@ -786,7 +787,7 @@
         height_cm: (d.goals && d.goals.height_cm) || me.height || '',
         weight_kg: (d.goals && d.goals.weight_kg) || me.weight || ''
       };
-      memberBody.innerHTML = head + (d.intake ? '' : pageTabs) +
+      memberBody.innerHTML = head + pageTabs +
         '<div class="day-focus">' + (d.intake ? 'Update your answers' : 'Step 1 — tell your coach about you') + '</div>' +
         '<div class="admin-notice">Fill in as much as you can. Your answers help your coach build a plan that fits your goals, tastes and daily routine. Only your coach and the gym admin can see them.' +
         (me.trainerId ? ' Your coach: <b>' + esc(nameOf(me.trainerId)) + '</b>.' : ' <b>You don’t have a coach assigned yet</b> — until then it goes to the admin.') + '</div>' +

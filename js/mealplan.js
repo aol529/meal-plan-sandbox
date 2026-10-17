@@ -163,6 +163,198 @@
     return a;
   }
 
+  /* ---------------- UPLOAD A FILLED QUESTIONNAIRE ----------------
+     The printable PDF (docs/Meal_Plan_Questionnaire.pdf) is a fillable
+     form. A copy filled in on a phone or computer is read right here in
+     the browser: its field names map to the questions. A printed copy
+     filled in by hand (scans or photos, or a PDF with no typed answers)
+     is read by AI on the server (/api/ai-read-questionnaire). Either
+     way the answers only go into the form — nothing is saved until the
+     member checks them and presses Send. */
+  const PDF_FIELDS = { age:'basics_1', height_cm:'basics_2', weight_kg:'basics_3', sex:'q2', job:'q3', goals:'q4', target:'q5',
+    job_activity:'q6', exercise:'q7', conditions:'q8', medications:'q9', pregnant:'q10', allergies:'q11', digestion:'q12',
+    eating_disorder:'q13', diet:'q14', loves:'q15', dislikes:'q16', drinks:'q17', meals_per_day:'q18', cooking_skill:'q19',
+    cook_time:'q20', meal_prep:'q21', budget:'q22', household:'q23', eat_out:'q24', anything_else:'q25' };
+  const PDFJS = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/';
+  let pdfjsLoading = null;
+  function loadPdfJs(){
+    if (!pdfjsLoading) pdfjsLoading = new Promise((resolve, reject)=>{
+      const s = document.createElement('script');
+      s.src = PDFJS + 'pdf.min.js';
+      s.onload = ()=>{ window.pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS + 'pdf.worker.min.js'; resolve(window.pdfjsLib); };
+      s.onerror = ()=>{ pdfjsLoading = null; reject(new Error('Couldn’t load the PDF reader — check your internet connection.')); };
+      document.head.appendChild(s);
+    });
+    return pdfjsLoading;
+  }
+  const fieldOrder = (a, b)=> parseInt(a.split('_')[1], 10) - parseInt(b.split('_')[1], 10);
+
+  // The answers typed into the fillable PDF. found = how many questions had one.
+  async function pdfFormAnswers(file){
+    const lib = await loadPdfJs();
+    const doc = await lib.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise;
+    const fields = (await doc.getFieldObjects()) || {};
+    const names = Object.keys(fields);
+    const val = name => { const f = name && fields[name]; return f && f[0] && f[0].value != null ? String(f[0].value).trim() : ''; };
+    const ticked = name => { const v = val(name); return v !== '' && v !== 'Off' && v !== 'false'; };
+    const a = {};
+    let found = 0;
+    QUESTIONS.forEach(q=>{
+      const key = q.id && PDF_FIELDS[q.id];
+      if (!key) return;
+      if (q.type === 'checks' || q.type === 'radio'){
+        // One tick box per option (q4_6, q4_7…), in the same order as q.options.
+        const boxes = names.filter(n=> n.indexOf(key + '_') === 0).sort(fieldOrder);
+        const chosen = q.options.filter((opt, i)=> ticked(boxes[i]));
+        if (chosen.length){ a[q.id] = q.type === 'checks' ? chosen : chosen[0]; found++; }
+      } else {
+        let v = val(key);
+        if (q.type === 'number') v = parseFloat(v.replace(',', '.')) || '';
+        if (v !== ''){ a[q.id] = v; found++; }
+      }
+    });
+    // A typical day: time_46 + food_47, time_48 + food_49… one pair per meal, in order.
+    const times = names.filter(n=> /^time_\d+$/.test(n)).sort(fieldOrder);
+    const foods = names.filter(n=> /^food_\d+$/.test(n)).sort(fieldOrder);
+    const day = {};
+    TYPICAL_DAY_ROWS.forEach((row, i)=>{
+      const time = val(times[i]), what = val(foods[i]);
+      if (time || what) day[row] = { time, what };
+    });
+    if (Object.keys(day).length){ a.typical_day = day; found++; }
+    return { answers: a, found, isForm: names.length > 0 };
+  }
+
+  // Photos are shrunk (long side 1600px, JPEG): plenty for handwriting, and quick to send.
+  function fileForAi(file){
+    return new Promise((resolve, reject)=>{
+      const fail = ()=> reject(new Error('Couldn’t open ' + file.name + ' — use a PDF, JPEG or PNG.'));
+      if (file.type === 'application/pdf'){
+        const r = new FileReader();
+        r.onload = ()=> resolve({ media_type: 'application/pdf', data: String(r.result).split(',')[1] });
+        r.onerror = fail;
+        r.readAsDataURL(file);
+        return;
+      }
+      const url = URL.createObjectURL(file), img = new Image();
+      img.onload = ()=>{
+        const k = Math.min(1, 1600 / Math.max(img.naturalWidth, img.naturalHeight));
+        const c = document.createElement('canvas');
+        c.width = Math.round(img.naturalWidth * k); c.height = Math.round(img.naturalHeight * k);
+        const g = c.getContext('2d');
+        g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height);
+        g.drawImage(img, 0, 0, c.width, c.height);
+        URL.revokeObjectURL(url);
+        resolve({ media_type: 'image/jpeg', data: c.toDataURL('image/jpeg', 0.85).split(',')[1] });
+      };
+      img.onerror = ()=>{ URL.revokeObjectURL(url); fail(); };
+      img.src = url;
+    });
+  }
+
+  async function aiReadAnswers(files){
+    const pages = await Promise.all(files.map(fileForAi));
+    const res = await fetch('/api/ai-read-questionnaire', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ files: pages, dayRows: TYPICAL_DAY_ROWS,
+        questions: QUESTIONS.filter(q=> q.id).map(q=> ({ id: q.id, label: q.label, type: q.type, options: q.options })) })
+    });
+    const body = await res.json().catch(()=> ({}));
+    if (res.status === 404 || res.status === 405) throw new Error('Reading handwriting needs the app’s server (npm start) — it isn’t available on this copy.');
+    if (!res.ok) throw new Error(body.error || ('AI request failed (' + res.status + ').'));
+    const a = {};
+    let found = 0;
+    QUESTIONS.forEach(q=>{
+      if (!q.id) return;
+      let v = body.answers && body.answers[q.id];
+      if (q.type === 'day'){
+        const day = {};
+        TYPICAL_DAY_ROWS.forEach(row=>{ const r = (v || {})[row] || {}; if ((r.time || '').trim() || (r.what || '').trim()) day[row] = { time: (r.time || '').trim(), what: (r.what || '').trim() }; });
+        if (Object.keys(day).length){ a.typical_day = day; found++; }
+        return;
+      }
+      if (q.type === 'number') v = parseFloat(String(v || '').replace(',', '.')) || '';
+      if (Array.isArray(v) ? v.length : (v != null && String(v).trim() !== '')){ a[q.id] = Array.isArray(v) ? v : (typeof v === 'string' ? v.trim() : v); found++; }
+    });
+    return { answers: a, found, unclear: body.unclear || [] };
+  }
+
+  // Puts imported answers into the form and marks what changed. Questions
+  // the file left blank keep whatever the form already had.
+  function fillQuestionnaire(form, a){
+    form.querySelectorAll('.mp-imported').forEach(el=> el.classList.remove('mp-imported'));
+    QUESTIONS.forEach(q=>{
+      if (!q.id || !(q.id in a)) return;
+      if (q.type === 'day'){
+        TYPICAL_DAY_ROWS.forEach((row, i)=>{
+          const v = a.typical_day[row];
+          if (!v) return;
+          ['time', 'what'].forEach(part=>{
+            const el = form.querySelector('[data-day-row="' + i + '"][data-day-part="' + part + '"]');
+            if (v[part]){ el.value = v[part]; el.classList.add('mp-imported'); }
+          });
+        });
+        return;
+      }
+      const field = form.querySelector('[name="' + q.id + '"]');
+      if (q.type === 'checks' || q.type === 'radio'){
+        const chosen = q.type === 'checks' ? a[q.id] : [a[q.id]];
+        form.querySelectorAll('input[name="' + q.id + '"]').forEach(el=>{ el.checked = chosen.indexOf(el.value) !== -1; });
+      } else field.value = a[q.id];
+      field.closest('.mp-q').classList.add('mp-imported');
+    });
+  }
+
+  function importBoxHtml(){
+    return '<div class="mp-import">' +
+      '<div class="mp-import-text"><b>Filled in the questionnaire already?</b> Upload the PDF and your answers drop into the form below. ' +
+      'Filled in a printed copy by hand? Upload a scan or a photo of each page and AI will read your handwriting.</div>' +
+      '<label class="btn2 mp-import-btn">Upload PDF or photos<input type="file" id="mp-import-file" accept="application/pdf,image/*" multiple hidden></label>' +
+      '<div class="mp-import-status" id="mp-import-status" aria-live="polite"></div></div>';
+  }
+
+  function wireImport(form){
+    const input = document.getElementById('mp-import-file'), status = document.getElementById('mp-import-status');
+    const say = (html, tone)=>{ status.className = 'mp-import-status' + (tone ? ' ' + tone : ''); status.innerHTML = html; };
+    const checkNote = ' Check them — they’re marked in the form — then press <b>Send to my coach</b>.';
+    const readWithAi = async files=>{
+      say('Reading your handwriting… (up to a minute)');
+      try {
+        const r = await aiReadAnswers(files);
+        if (!r.found){ say('The AI couldn’t find any answers on ' + (files.length > 1 ? 'these pages' : 'this page') + '. Try a clearer, straight-on photo in good light.', 'warn'); return; }
+        fillQuestionnaire(form, r.answers);
+        say('AI read <b>' + r.found + '</b> answer' + (r.found === 1 ? '' : 's') + '. Handwriting can be misread, so check each one — they\u2019re marked in the form — then press <b>Send to my coach</b>.' +
+          (r.unclear.length ? '<div class="mp-import-unclear">Couldn’t read clearly: ' + r.unclear.map(esc).join('; ') + '</div>' : ''), 'ok');
+      } catch (err){ say(esc(err.message || 'Couldn’t read the form.'), 'warn'); }
+    };
+    const offerAi = (files, why)=>{
+      say(why + ' <button type="button" class="btn2" id="mp-import-ai">Read the handwriting with AI</button>' +
+        '<div class="field-hint">Sends the pages to Claude (a few cents). Nothing is saved until you press Send.</div>');
+      document.getElementById('mp-import-ai').addEventListener('click', ()=> readWithAi(files));
+    };
+    input.addEventListener('change', async ()=>{
+      const files = Array.from(input.files || []);
+      input.value = '';
+      if (!files.length) return;
+      if (files.length === 1 && files[0].type === 'application/pdf'){
+        say('Reading ' + esc(files[0].name) + '…');
+        try {
+          const r = await pdfFormAnswers(files[0]);
+          if (r.found){
+            fillQuestionnaire(form, r.answers);
+            say('Filled in <b>' + r.found + '</b> answer' + (r.found === 1 ? '' : 's') + ' from ' + esc(files[0].name) + '.' + checkNote, 'ok');
+            return;
+          }
+          offerAi(files, r.isForm ? 'This PDF has no typed answers — if it was filled in by hand and scanned, AI can read it.'
+            : 'This PDF is a scan, not the fillable form.');
+        } catch (err){ say(esc(err.message || 'Couldn’t open that PDF.'), 'warn'); }
+        return;
+      }
+      offerAi(files, files.length + ' page' + (files.length === 1 ? '' : 's') + ' ready.');
+    });
+  }
+
   // Read-only answers, for the coach (and the member's own "your answers").
   function answersHtml(a){
     let n = 0, html = '<div class="mp-answers">';
@@ -595,10 +787,11 @@
         '<div class="day-focus">' + (d.intake ? 'Update your answers' : 'Step 1 — tell your coach about you') + '</div>' +
         '<div class="admin-notice">Fill in as much as you can. Your answers help your coach build a plan that fits your goals, tastes and daily routine. Only your coach and the gym admin can see them.' +
         (me.trainerId ? ' Your coach: <b>' + esc(nameOf(me.trainerId)) + '</b>.' : ' <b>You don’t have a coach assigned yet</b> — until then it goes to the admin.') + '</div>' +
-        questionnaireFormHtml(prefill) +
+        importBoxHtml() + questionnaireFormHtml(prefill) +
         (d.intake ? '<div class="mp-actions"><button type="button" class="btn2" id="mp-cancel-edit">Cancel</button></div>' : '');
       wirePageTabs();
       const form = document.getElementById('mp-intake-form');
+      wireImport(form);
       form.addEventListener('submit', async (e)=>{
         e.preventDefault();
         const btn = form.querySelector('button[type=submit]');

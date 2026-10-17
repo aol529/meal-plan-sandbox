@@ -298,3 +298,18 @@ details.mp-fold{overflow:hidden;}
 .diet-view-title{font-size:28px;}
 .diet-view-actions{display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
 .diet-view-summary{font-size:15px; color:var(--muted); max-width:75ch; margin:6px 0 10px;}
+
+/* ---------- Upload a filled questionnaire (PDF, or scans/photos read by AI) ---------- */
+.mp-import{background:var(--surface-2); border:1px dashed var(--line); padding:14px; margin-bottom:20px; border-radius:var(--radius); display:grid; gap:10px;}
+.mp-import-text{font-size:12.5px; color:var(--muted);}
+.mp-import-text b{color:var(--text);}
+.mp-import-btn{justify-self:start;}
+.mp-import-status{font-size:12.5px; color:var(--muted);}
+.mp-import-status:empty{display:none;}
+.mp-import-status b{color:var(--text);}
+.mp-import-status.ok{color:var(--text); border-left:3px solid var(--accent-3); padding-left:10px;}
+.mp-import-status.warn{color:#e0736a;}
+.mp-import-status .btn2{margin:6px 8px 0 0;}
+.mp-import-unclear{margin-top:6px; color:var(--accent);}
+.mp-q.mp-imported{border-left:3px solid var(--accent-3); padding-left:10px;}
+.mp-day-grid .mp-input.mp-imported{box-shadow:inset 3px 0 0 var(--accent-3);}

@@ -15,10 +15,17 @@ To turn it on, create a file named `.env` in this folder containing one line:
 
 then restart with `npm start`. `.env` is git-ignored and the server refuses to serve dotfiles. Each suggestion is one request to `claude-opus-5-5` (a few cents).
 
+## Uploading a filled questionnaire
+The questionnaire page has **Upload PDF or photos**:
+- **The fillable PDF** (`docs/Meal_Plan_Questionnaire.pdf`) filled in on a phone or computer: the answers are read in the browser from the form fields and dropped into the form. No AI, works offline from the server too.
+- **A printed copy filled in by hand** (scans or photos, or a PDF with no typed answers): **Read the handwriting with AI** sends the pages to Claude (`/api/ai-read-questionnaire`, needs the API key above, a few cents per form). Questions it couldn't read are listed.
+
+Either way the answers only fill the form, marked in green; nothing is saved until the member checks them and presses Send.
+
 ## Files
 - `js/mealplan.js` — copied from the gym app's `js/bells-n-barz-mealplan.js`; only the Supabase calls are swapped for `MP_STORE`.
 - `js/store.js` — localStorage stand-in for the `meal_plan_*`, `nutrition_goals` and `notifications` tables, with the same access rule as the gym app's `sql/45-meal-plans.sql`.
 - `js/app.js` — header: View as, Member/Coach toggle (for accounts with both roles), notification bell, reset.
-- `ai.js` + `server.js` — `/api/ai-suggest`: sends the answers to Claude and returns a plan via structured outputs.
+- `ai.js` + `server.js` — `/api/ai-suggest`: sends the answers to Claude and returns a plan via structured outputs; `/api/ai-read-questionnaire`: reads a handwritten questionnaire from scans/photos into the same answer shape.
 
 Sandbox-only difference: the coach sets calorie/macro targets in the plan editor (with a "Suggest from questionnaire" button using the guide's Mifflin-St Jeor steps), since there's no Nutrition calculator here.

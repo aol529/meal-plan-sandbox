@@ -1,7 +1,7 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
-const { suggestPlan, Anthropic } = require('./ai');
+const { suggestPlan, readQuestionnaire, READ_TYPES, Anthropic } = require('./ai');
 
 const ROOT = __dirname;
 const INDEX_FILE = 'index.html';
@@ -74,12 +74,38 @@ async function handleAiSuggest(req, res){
   }
 }
 
+// A paper questionnaire (scans/photos, or a PDF with no typed answers)
+// -> answers for the member to check in the form. Nothing is stored.
+async function handleReadQuestionnaire(req, res){
+  try {
+    const body = await readJsonBody(req, 30 * 1024 * 1024);
+    const files = Array.isArray(body.files) ? body.files : [];
+    const questions = Array.isArray(body.questions) ? body.questions : [];
+    if (!files.length || files.length > 10) return sendJson(res, 400, { error: 'Send between 1 and 10 pages.' });
+    if (files.some(f => !f || typeof f.data !== 'string' || !READ_TYPES.includes(f.media_type))) return sendJson(res, 400, { error: 'Only PDF, JPEG, PNG, WebP or GIF files can be read.' });
+    if (!questions.length) return sendJson(res, 400, { error: 'Missing the question list.' });
+    if (!aiConfigured()) return sendJson(res, 503, { error: 'Reading paper forms needs AI, which isn\u2019t set up yet — the server needs an ANTHROPIC_API_KEY (see README.md).' });
+    const result = await readQuestionnaire({ files, questions, dayRows: Array.isArray(body.dayRows) ? body.dayRows : [] });
+    console.log(`AI read questionnaire: ${result.model}, ${files.length} file(s), ${result.usage.input_tokens} in / ${result.usage.output_tokens} out tokens`);
+    sendJson(res, 200, result);
+  } catch (err){
+    const [status, message] = aiErrorResponse(err);
+    console.error('AI questionnaire reading failed:', err.message);
+    sendJson(res, status, { error: message });
+  }
+}
+
 const server = http.createServer((req, res) => {
   let urlPath = decodeURIComponent(req.url.split('?')[0]);
 
   if (urlPath === '/api/ai-suggest'){
     if (req.method !== 'POST'){ res.writeHead(405, { Allow: 'POST' }); res.end(); return; }
     handleAiSuggest(req, res);
+    return;
+  }
+  if (urlPath === '/api/ai-read-questionnaire'){
+    if (req.method !== 'POST'){ res.writeHead(405, { Allow: 'POST' }); res.end(); return; }
+    handleReadQuestionnaire(req, res);
     return;
   }
   if (urlPath === '/api/ai-status'){

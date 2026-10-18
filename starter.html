@@ -53,6 +53,8 @@
       <option value="recomp">Lose fat and build muscle</option><option value="maintain">Maintain</option></select></label>
     <label>Meals a day <select class="mp-input" name="meals"><option value="3s2">3 meals + 2 snacks</option><option value="3s1">3 meals + 1 snack</option><option value="3s0">3 meals</option><option value="2s1">2 meals + 1 snack</option><option value="2s2">2 meals + 2 snacks</option></select></label>
     <label class="st-full">Foods they love <input class="mp-input" name="loves" placeholder="e.g. chicken, fish, beans, ugali, rice"></label>
+    <label>Way of eating <select class="mp-input" name="diet"><option>No restrictions</option><option>Vegetarian</option><option>Vegan</option><option>Pescatarian</option><option>Halal</option><option>Kosher</option><option>Other</option></select></label>
+    <label>Won’t eat / allergies <input class="mp-input" name="avoid" placeholder="none"></label>
     <label class="st-full">Digestive issues <input class="mp-input" name="gut" placeholder="none"></label>
   </form>
 
@@ -72,7 +74,7 @@
     const f = form.elements, n = x => parseFloat(String(x).replace(',', '.')) || 0;
     return { age: n(f.age.value) || 25, sex: f.sex.value, height: n(f.height.value), weight: n(f.weight.value), job: f.job.value,
       days: Math.min(7, Math.round(n(f.days.value))), goal: f.goal.value, meals: +f.meals.value[0], snacks: +f.meals.value[2],
-      loves: f.loves.value.trim(), avoid: '', diet: '', gut: f.gut.value.trim(), target: '', typical: {} };
+      loves: f.loves.value.trim(), avoid: P.fromAnswers({ dislikes: f.avoid.value.trim() }).avoid, diet: f.diet.value, gut: f.gut.value.trim(), target: '', typical: {} };
   }
 
   function render(){
@@ -135,6 +137,8 @@
       const F = (await doc.getFieldObjects()) || {};
       const val = n => F[n] && F[n][0] && F[n][0].value != null ? String(F[n][0].value).trim() : '';
       const on = n => { const x = val(n); return x && x !== 'Off'; };
+      // A radio question's tick boxes (q14_40, q14_41…) in the order of its options.
+      const pick = (q, options) => { const boxes = Object.keys(F).filter(n => n.indexOf(q + '_') === 0).sort((x, y) => x.split('_')[1] - y.split('_')[1]); return options.find((x, i) => on(boxes[i])) || ''; };
       if (!Object.keys(F).length) throw new Error('This PDF isn’t the fillable questionnaire.');
       // The same answers the app would read, then the program's view of them.
       const a = {
@@ -142,11 +146,13 @@
         sex: on('q2_5') ? 'Male' : 'Female', exercise: val('q7'), target: val('q5'), loves: val('q15'), digestion: val('q12'), anything_else: val('q25'),
         job_activity: ['Mostly sitting', 'On my feet some of the day', 'Physically demanding'].find((x, i) => on('q6_' + (13 + i))) || 'Mostly sitting',
         goals: ['Lose fat', 'Build muscle', 'Maintain weight'].filter((x, i) => on('q4_' + (6 + i))),
-        meals_per_day: ['1', '2', '3', '4 or more'].find((x, i) => on('q18_' + (28 + i))) || ''
+        meals_per_day: ['1', '2', '3', '4 or more'].find((x, i) => on('q18_' + (28 + i))) || '',
+        diet: pick('q14', ['No restrictions', 'Vegetarian', 'Vegan', 'Pescatarian', 'Halal', 'Kosher', 'Other']), allergies: val('q11'), dislikes: val('q16')
       };
       const v = P.fromAnswers(a), f = form.elements;
       f.age.value = v.age || ''; f.height.value = v.height || ''; f.weight.value = v.weight || ''; f.sex.value = v.sex; f.job.value = v.job;
       f.days.value = v.days; f.goal.value = v.goal; f.meals.value = v.meals + 's' + v.snacks; f.loves.value = v.loves; f.gut.value = v.gut;
+      f.diet.value = v.diet || 'No restrictions'; f.avoid.value = v.avoid;
       render();
       say('Filled in from ' + esc(file.name) + (v.height && v.weight ? '.' : ' — <b>no ' + [!v.height && 'height', !v.weight && 'weight'].filter(Boolean).join(' or ') + '</b>, so the targets are an estimate.') + ' Check the boxes; change anything and it updates.', 'ok');
     } catch (err){ say(esc(err.message || 'Couldn’t read that PDF.'), 'warn'); }

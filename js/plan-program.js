@@ -14,7 +14,10 @@
 window.MP_PROGRAM = (function(){
   const num = x => parseFloat(String(x == null ? '' : x).replace(',', '.')) || 0;
   const r10 = n => Math.round(n / 10) * 10, r50 = n => Math.round(n / 50) * 50;
+  // An answer that starts "None"/"No" (exercise, digestion)…
   const NONE = /^\s*(none|no|nothing|n\/a|not sure)\b/i;
+  // …but for foods to avoid only a whole-answer "none" counts, so "No pork" still avoids pork.
+  const NONE_ONLY = /^[\s.!-]*(none|no|nil|nothing|n\/?a|not sure)( (known|really|at all|that i know of))?( (allergies|intolerances|dislikes))?[\s.!]*$/i;
 
   /* ---------- Energy ---------- */
   // Height or weight missing: a typical adult of that sex in Kenya (about
@@ -46,12 +49,29 @@ window.MP_PROGRAM = (function(){
   }
 
   /* ---------- Questionnaire answers -> the program's inputs ---------- */
+  // "Monday Tuesday and Wednesday", "gym 4x a week", "twice a week",
+  // "weekdays", "every day" -> days a week; "twice a month" is under one.
+  const WORD_NUM = { once: 1, twice: 2, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7 };
+  const DAY_NAME = /^(mon(day)?|tue(s(day)?)?|wed(nesday)?|thu(r(s(day)?)?)?|fri(day)?|sat(urday)?|sun(day)?)s?$/;
+  function exerciseDays(ex){
+    ex = String(ex || '').trim().toLowerCase();
+    if (!ex || NONE.test(ex)) return 0;
+    if (/every ?day|daily/.test(ex)) return 7;
+    const DAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+    const range = ex.match(/\b(mon|tue|wed|thu|fri|sat|sun)[a-z]*\s*(?:-|–|to|through|till)\s*(mon|tue|wed|thu|fri|sat|sun)[a-z]*/);
+    if (range) return (DAYS.indexOf(range[2]) - DAYS.indexOf(range[1]) + 7) % 7 + 1;
+    const named = new Set((ex.match(/\b[a-z]+\b/g) || []).filter(w => DAY_NAME.test(w)).map(w => w.slice(0, 3)));
+    if (/weekends?/.test(ex)) named.add('sat').add('sun');
+    if (named.size) return named.size;
+    const m = ex.match(/\b(\d+|one|two|three|four|five|six|seven)\s*(x|×|times?|days?|sessions?)|\b(once|twice)\b/);
+    const n = m ? WORD_NUM[m[3] || m[1]] || num(m[1]) : 0;
+    if (n && /month/.test(ex)) return Math.round(n / 4.3);
+    return Math.min(7, n || (/weekdays/.test(ex) ? 5 : 2));
+  }
+
   function fromAnswers(a){
     a = a || {};
-    const ex = String(a.exercise || '').trim();
-    // "Monday Tuesday and Wednesday", "gym 4x a week", "3 days" -> days a week.
-    const days = Math.min(7, (ex.match(/mon|tue|wed|thu|fri|sat|sun/gi) || []).length ||
-      num((ex.match(/(\d+)\s*(x|×|times|days|sessions)/i) || [])[1]) || (ex && !NONE.test(ex) ? 2 : 0));
+    const days = exerciseDays(a.exercise);
     const goals = a.goals || [];
     const goal = goals.includes('Lose fat') && goals.includes('Build muscle') ? 'recomp' : goals.includes('Lose fat') ? 'lose'
       : goals.includes('Build muscle') || /gain|bulk|add weight|put on/i.test(a.target || '') ? 'gain' : 'maintain';
@@ -61,7 +81,7 @@ window.MP_PROGRAM = (function(){
       job: a.job_activity || 'Mostly sitting', days, goal,
       meals: a.meals_per_day === '1' || a.meals_per_day === '2' ? (goal === 'lose' ? 2 : 3) : 3,
       snacks: goal === 'gain' || wantsSnacks || a.meals_per_day === '4 or more' ? 2 : 1,
-      loves: a.loves || '', avoid: [a.dislikes, a.allergies].filter(x => x && !NONE.test(x)).join(' '),
+      loves: a.loves || '', avoid: [a.dislikes, a.allergies].filter(x => x && !NONE_ONLY.test(x)).join(' '),
       diet: a.diet || '', gut: a.digestion || '', budget: a.budget || '', mealPrep: a.meal_prep || '', eatOut: a.eat_out || '',
       target: a.target || '', typical: a.typical_day || {}
     };
@@ -71,64 +91,78 @@ window.MP_PROGRAM = (function(){
   // tag: what a way of eating or an allergy can rule out.
   const PROTEINS = [
     { k: /chicken|kuku/, name: 'Chicken stew', amt: '1 palm', kcal: 240, p: 30, tag: 'meat' },
-    { k: /fish|tilapia|samaki/, name: 'Tilapia', amt: '1 medium fish', kcal: 190, p: 32, tag: 'fish' },
+    { k: /\bfish|tilapia|samaki/, name: 'Tilapia', amt: '1 medium fish', kcal: 190, p: 32, tag: 'fish' },
     { k: /omena|dagaa/, name: 'Omena', amt: '1 cupped hand', kcal: 200, p: 25, tag: 'fish' },
-    { k: /beef|nyama/, name: 'Beef stew', amt: '1 palm', kcal: 260, p: 30, tag: 'meat' },
-    { k: /pork/, name: 'Pork', amt: '1 palm', kcal: 290, p: 30, tag: 'pork' },
-    { k: /liver/, name: 'Liver', amt: '1 palm', kcal: 210, p: 30, tag: 'meat' },
+    { k: /beef|nyama|red meat/, name: 'Beef stew', amt: '1 palm', kcal: 260, p: 30, tag: 'meat' },
+    { k: /pork|red meat/, name: 'Pork', amt: '1 palm', kcal: 290, p: 30, tag: 'pork' },
+    { k: /liver|red meat|offal/, name: 'Liver', amt: '1 palm', kcal: 210, p: 30, tag: 'meat' },
     { k: /green ?grams|ndengu|lentil/, name: 'Ndengu', amt: '1½ cups', kcal: 300, p: 20, tag: 'plant' },
     { k: /beans|maharagwe|githeri/, name: 'Beans', amt: '1½ cups', kcal: 340, p: 22, tag: 'plant' },
-    { k: /egg/, name: 'Eggs', amt: '3 eggs', kcal: 230, p: 19, tag: 'egg' }
+    { k: /\beggs?\b/, name: 'Eggs', amt: '3 eggs', kcal: 230, p: 19, tag: 'egg' },
+    // Only when they love it, or nothing else is left (e.g. vegan and no beans).
+    { k: /soy|soya|tofu/, name: 'Soya chunks', amt: '1 cup cooked', kcal: 200, p: 24, tag: 'plant' }
   ];
   // q = usual amount; one/many = how to say it.
   const STARCHES = [
     { k: /ugali/, name: 'Ugali', q: 1, one: 'fist-sized piece', many: 'fist-sized pieces', kcal: 240, p: 5 },
     { k: /rice|wali|pilau/, name: 'Rice', q: 1, one: 'cup', many: 'cups', kcal: 210, p: 4 },
     { k: /waru|potato|viazi/, name: 'Boiled waru', q: 2, one: 'medium potato', many: 'medium potatoes', kcal: 220, p: 5 },
-    { k: /chap/, name: 'Chapati', q: 1, one: 'chapati', many: 'chapatis', kcal: 270, p: 6 },
+    { k: /chap/, name: 'Chapati', q: 1, one: 'chapati', many: 'chapatis', kcal: 270, p: 6, tag: 'gluten' },
     { k: /sweet potato|ngwaci/, name: 'Sweet potato', q: 1, one: 'medium sweet potato', many: 'medium sweet potatoes', kcal: 180, p: 3 },
     { k: /matoke/, name: 'Matoke', q: 2, one: 'finger', many: 'fingers', kcal: 220, p: 3 }
   ];
   const VEG = { text: 'sukuma wiki, cabbage or managu (1–2 fists)', kcal: 70, p: 3 };
+  const LEGUMES = /beans|ndengu|green ?grams|lentil|legume|pulses/;
   const BREAKFASTS = [
-    { needs: ['dairy', 'nut', 'egg'], text: 'Tea with milk, 2 slices of bread with 1 tablespoon peanut butter, 2 eggs', kcal: 520, p: 26 },
+    { needs: ['dairy', 'nut', 'egg', 'gluten'], text: 'Tea with milk, 2 slices of bread with 1 tablespoon peanut butter, 2 eggs', kcal: 520, p: 26 },
     { needs: ['dairy', 'nut'], text: 'Uji (millet or sorghum) made with half milk, a small handful of groundnuts, a banana', kcal: 450, p: 15 },
     { needs: ['egg'], text: '1 sweet potato or 2 pieces of nduma, 2–3 boiled eggs, tea', kcal: 420, p: 18 },
-    { needs: [], text: 'Leftover beans or ndengu (1 cup) with 1 chapati or 2 slices of bread, tea', kcal: 480, p: 18 },
-    { needs: ['dairy'], text: 'Mala or yoghurt (1 cup), a fruit and 2 slices of bread', kcal: 380, p: 14 }
+    { needs: ['gluten'], bad: LEGUMES, text: 'Leftover beans or ndengu (1 cup) with 1 chapati or 2 slices of bread, tea', kcal: 480, p: 18 },
+    { needs: ['dairy', 'gluten'], text: 'Mala or yoghurt (1 cup), a fruit and 2 slices of bread', kcal: 380, p: 14 },
+    { needs: [], bad: LEGUMES, text: 'Leftover beans or ndengu (1 cup) with 1 sweet potato or 2 pieces of nduma, tea', kcal: 400, p: 17 },
+    { needs: [], text: 'Uji (millet or sorghum) with a banana and half an avocado, tea', kcal: 400, p: 8 }
   ];
   const SNACKS = [
     { needs: ['nut'], text: 'A banana and a small handful of groundnuts', kcal: 275, p: 8 },
     { needs: ['dairy'], text: 'Mala or yoghurt (1 cup) and a fruit in season', kcal: 240, p: 9 },
     { needs: ['egg'], text: '2 boiled eggs and a fruit', kcal: 230, p: 13 },
-    { needs: [], text: 'Roasted maize, or 2 slices of bread with avocado', kcal: 250, p: 6 },
-    { needs: ['nut'], text: '2 slices of bread with peanut butter', kcal: 260, p: 10 }
+    { needs: [], text: 'Roasted maize, or a fruit with half an avocado', kcal: 250, p: 5 },
+    { needs: ['nut', 'gluten'], text: '2 slices of bread with peanut butter', kcal: 260, p: 10 }
   ];
-  const AVOID_TAG = { egg: /egg/, dairy: /milk|dairy|lactose|mala|yoghurt|yogurt/, nut: /nut|peanut|groundnut/ };
+  // What an allergy or dislike rules out ("shellfish" isn't fish, "eggplant" isn't eggs, "coconut" isn't a nut).
+  const AVOID_TAG = { egg: /\beggs?\b/, dairy: /milk|dairy|lactose|mala|yoghurt|yogurt|cheese/, nut: /\bnuts?\b|peanut|groundnut|cashew|almond/,
+    fish: /\bfish|seafood|samaki/, meat: /(?<!red )\bmeats?\b/, gluten: /gluten|wheat|c(o)?eliac/ };
   function tagOk(v, tag){
     const d = v.diet;
     if (tag === 'meat' || tag === 'pork') if (/Vegetarian|Vegan|Pescatarian/.test(d)) return false;
     if (tag === 'pork' && /Halal|Kosher/.test(d)) return false;
     if (tag === 'fish' && /Vegetarian|Vegan/.test(d)) return false;
     if ((tag === 'egg' || tag === 'dairy') && d === 'Vegan') return false;
+    if (tag === 'pork' && AVOID_TAG.meat.test(v.avoid.toLowerCase())) return false;
     return !(AVOID_TAG[tag] && AVOID_TAG[tag].test(v.avoid.toLowerCase()));
   }
   const foodOk = (v, f) => tagOk(v, f.tag) && !f.k.test(v.avoid.toLowerCase());
-  const okList = (v, list) => list.filter(x => (x.needs || []).every(t => tagOk(v, t)) && (!x.k || foodOk(v, x)));
+  const okList = (v, list) => list.filter(x => (x.needs || []).every(t => tagOk(v, t)) && (!x.k || foodOk(v, x)) && !(x.bad && x.bad.test(v.avoid.toLowerCase())));
   // What they love (two or more is enough to rotate), else topped up with everyday defaults.
-  function choices(v, list, defaults){
+  // Anything they can eat when even that leaves nothing; a stand-in if they can eat none.
+  function choices(v, list, defaults, fallback){
     const loves = v.loves.toLowerCase();
     const ok = list.filter(f => (!f.tag || tagOk(v, f.tag)) && !f.k.test(v.avoid.toLowerCase()));
     const loved = ok.filter(f => f.k.test(loves));
-    return loved.length >= 2 ? loved : loved.concat(ok.filter(f => !loved.includes(f) && defaults.test(f.name.toLowerCase())));
+    const out = loved.length >= 2 ? loved : loved.concat(ok.filter(f => !loved.includes(f) && defaults.test(f.name.toLowerCase())));
+    return out.length ? out : ok.length ? ok : [fallback];
   }
+  const ANY_PROTEIN = { name: 'A protein you eat', amt: '1 palm', kcal: 220, p: 25 };
+  const ANY_STARCH = { name: 'A starch you eat', q: 1, one: 'cupped hand', many: 'cupped hands', kcal: 200, p: 4 };
+  const proteinChoices = v => choices(v, PROTEINS, /beans|chicken|eggs|ndengu|tilapia/, ANY_PROTEIN);
+  const starchChoices = v => choices(v, STARCHES, /ugali|rice|sweet potato|chapati/, ANY_STARCH);
   const half = q => (Math.floor(q) ? Math.floor(q) : '') + (q % 1 ? '½' : '') || '0';
   const starchText = (s, step) => { const q = s.q * step; return s.name.toLowerCase() + ' (' + half(q) + ' ' + (q > 1 ? s.many : s.one) + ')'; };
   // sShift pairs each protein with a different starch, so dinners aren't lunches again.
   // seen (shared by lunches and dinners) skips pairs already used, until
   // the foods run out; then repeats are fine.
   function plates(v, n, offset, sShift, step, seen){
-    const P = choices(v, PROTEINS, /beans|chicken|eggs|ndengu|fish/), S = choices(v, STARCHES, /ugali|rice|sweet potato|chapati/);
+    const P = proteinChoices(v), S = starchChoices(v);
     const out = [];
     seen = seen || {};
     for (let i = 0; out.length < n && i < n * 4 + P.length * S.length; i++){
@@ -214,24 +248,34 @@ window.MP_PROGRAM = (function(){
     const pattern = v.meals + ' meals' + (v.snacks ? ' + ' + v.snacks + ' snack' + (v.snacks > 1 ? 's' : '') : '') + ': ' + (v.meals >= 3 ? 'breakfast' + when('Breakfast') + ', ' : '') +
       (v.snacks >= 1 ? 'a snack mid-morning, ' : '') + 'lunch' + when('Lunch') + (v.snacks >= 2 ? ', a snack mid-afternoon' : '') + ', dinner' + when('Dinner') +
       '. Eat every 3–4 hours' + (v.snacks ? ' and carry the snacks to work.' : '.');
-    const vegetarian = /Vegetarian|Vegan/.test(v.diet);
+    // Swaps and eating out from the foods this member can have.
+    const canEat = list => list.filter(f => (!f.tag || tagOk(v, f.tag)) && !f.k.test(v.avoid.toLowerCase())).map(f => f.name.replace(/ stew|Boiled /g, '').toLowerCase());
+    // Soya only when it's on the menu; six is plenty for one line.
+    const ORDER = ['chicken', 'tilapia', 'beef', 'beans', 'ndengu', 'eggs', 'omena', 'pork', 'liver', 'soya chunks'];
+    const proteinsOk = canEat(PROTEINS).filter(x => x !== 'soya chunks' || R.lunches.some(l => l.pf.name === 'Soya chunks'))
+      .sort((x, y) => ORDER.indexOf(x) - ORDER.indexOf(y)).slice(0, 6), starchesOk = canEat(STARCHES);
+    const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+    const meaty = proteinsOk.some(x => /chicken|beef|pork|liver/.test(x));
     const swaps = [
-      vegetarian ? 'Beans ↔ ndengu ↔ eggs ↔ lentils (1½ cups of beans = a palm of meat)' : 'Chicken ↔ fish ↔ beef ↔ omena ↔ beans or ndengu (1½ cups = a palm of meat)',
-      'Ugali ↔ rice ↔ waru ↔ chapati ↔ sweet potato',
+      proteinsOk.length > 1 && cap(proteinsOk.join(' ↔ ')) + (meaty && /beans|ndengu/.test(proteinsOk.join()) ? ' (1½ cups of beans = a palm of meat)' : ''),
+      starchesOk.length > 1 && cap(starchesOk.join(' ↔ ')),
       'Sukuma ↔ cabbage ↔ managu ↔ spinach ↔ terere',
-      'Groundnuts ↔ a spoon of peanut butter ↔ half an avocado',
+      tagOk(v, 'nut') ? 'Groundnuts ↔ a spoon of peanut butter ↔ half an avocado' : '',
       'Soda or juice → water, or tea with less sugar'
-    ].filter(s => tagOk(v, 'nut') || !/groundnut/i.test(s));
+    ].filter(Boolean);
     const often = /3–5|Most days/.test(v.eatOut);
-    const eating_out = 'Pick a plate you can see: ' + (vegetarian ? 'beans, ndengu or eggs' : 'chicken, fish or nyama choma') +
-      ' with ugali or rice and kachumbari or greens: one starch, not two (skip the chips when there is ugali or rice). Water or tea instead of soda.' +
+    const outProtein = ['chicken', 'tilapia', 'beef', 'beans', 'ndengu', 'eggs', 'soya chunks'].filter(x => proteinsOk.includes(x)).slice(0, 3)
+      .map(x => x === 'beef' ? 'nyama choma' : x === 'tilapia' ? 'fish' : x);
+    const outStarch = ['ugali', 'rice', 'chapati'].filter(x => starchesOk.includes(x)).slice(0, 2);
+    const eating_out = 'Pick a plate you can see: ' + (outProtein.length ? outProtein.join(', ').replace(/, ([^,]*)$/, ' or $1') : 'a protein you eat') +
+      ' with ' + (outStarch.length ? outStarch.join(' or ') : 'one starch') + ' and kachumbari or greens: one starch, not two (skip the chips when there is ' + (outStarch.length ? outStarch.join(' or ') : 'another starch') + '). Water or tea instead of soda.' +
       (often ? ' Eating out ' + v.eatOut.toLowerCase() + ': pack lunch 2–3 days a week (take the dinner leftovers); it saves money and keeps portions right.' : '') +
-      (v.goal === 'gain' ? ' Having chips? Add a protein (chicken or eggs) rather than chips alone.' : '');
+      (v.goal === 'gain' ? ' Having chips? Add a protein' + (outProtein.length ? ' (' + outProtein.slice(0, 2).join(' or ') + ')' : '') + ' rather than chips alone.' : '');
 
     const used = arr => [...new Set(arr)];
     const grocery = [
       { category: 'Protein', items: used(R.lunches.concat(R.dinners).map(x => x.pf.name.replace(/ stew|Boiled /g, '').toLowerCase())) },
-      { category: 'Starches', items: used(R.lunches.concat(R.dinners).map(x => x.sf.name.replace(/Boiled /, '').toLowerCase()).concat(['bread', 'millet or sorghum flour (uji)'])) },
+      { category: 'Starches', items: used(R.lunches.concat(R.dinners).map(x => x.sf.name.replace(/Boiled /, '').toLowerCase()).concat(tagOk(v, 'gluten') ? ['bread'] : [], ['millet or sorghum flour (uji)'])) },
       { category: 'Vegetables & fruit', items: ['sukuma wiki', 'cabbage', 'managu', 'tomatoes', 'onions', 'carrots', 'bananas', 'fruit in season'] },
       { category: 'Dairy & eggs', items: ['milk', 'mala or yoghurt', 'eggs'].filter(x => tagOk(v, /egg/.test(x) ? 'egg' : 'dairy')) },
       { category: 'Other', items: ['groundnuts', 'peanut butter', 'cooking oil (a little)', 'tea leaves'].filter(x => tagOk(v, 'nut') || !/nut/.test(x)) }
@@ -271,10 +315,10 @@ window.MP_PROGRAM = (function(){
   // For the coach's "Suggest from questionnaire" button: only with real height and weight.
   function suggestTargets(answers){
     const v = fromAnswers(answers);
-    if (!v.age || !v.height || !v.weight) return null;
+    if (!answers || !answers.sex || !v.age || !v.height || !v.weight) return null;
     const t = targets(v, { cm: v.height, kg: v.weight });
     return { target_calories: r10(t.cal), target_protein_g: Math.round(t.protein), target_carbs_g: Math.round(t.carbs), target_fat_g: Math.round(t.fat) };
   }
 
-  return { fromAnswers, build, plan, suggestTargets, activity, bmr, hands, weeklyRule, hasGutIssue, GUT_TIPS, GOAL_KCAL, r10, r50 };
+  return { fromAnswers, exerciseDays, build, plan, suggestTargets, activity, bmr, hands, weeklyRule, hasGutIssue, GUT_TIPS, GOAL_KCAL, r10, r50 };
 })();

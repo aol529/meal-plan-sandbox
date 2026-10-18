@@ -576,13 +576,28 @@
   // (needs the server and an API key, see README.md).
   const SUGGEST_WITH_AI = false;
   let aiBusy = {}; // memberId -> true while a request is in flight
+  function programPlan(intake, memberId){
+    const strong = referralFlags(intake.answers).some(f=> f.strong);
+    return window.MP_PROGRAM.plan(intake.answers, S.getCheckins(memberId), { refer: strong ? REFER_NOTE : '' });
+  }
+  // The program is instant and free, so its plan is worked out again
+  // whenever the page opens: new answers or check-ins show straight away.
+  // Only saved when it changed, so "worked out" keeps its date. An AI
+  // draft from before (SUGGEST_WITH_AI) is kept until "Work it out again".
+  function refreshProgramPlan(memberId){
+    const intake = S.getIntake(memberId), ai = S.getAi(memberId);
+    if (!intake || (ai && ai.model !== 'program')) return;
+    try {
+      const fresh = programPlan(intake, memberId);
+      if (!ai || JSON.stringify(ai.plan) !== JSON.stringify(fresh.plan)) S.saveAi(memberId, fresh);
+    } catch (err){ console.error(err); }
+  }
   async function generateAi(memberId){
     const intake = S.getIntake(memberId);
     if (!intake) return;
     if (!SUGGEST_WITH_AI){
       try {
-        const strong = referralFlags(intake.answers).some(f=> f.strong);
-        S.saveAi(memberId, window.MP_PROGRAM.plan(intake.answers, S.getCheckins(memberId), { refer: strong ? REFER_NOTE : '' }));
+        S.saveAi(memberId, programPlan(intake, memberId));
         toast('Suggested plan ready.');
       } catch (err){ toast(err.message || 'Couldn\u2019t work out a suggested plan.'); }
       return;
@@ -606,6 +621,7 @@
   }
 
   function aiPageHtml(memberId, forCoach){
+    if (!SUGGEST_WITH_AI) refreshProgramPlan(memberId);
     const ai = S.getAi(memberId);
     const busy = !!aiBusy[memberId];
     const byAi = SUGGEST_WITH_AI || (ai && ai.model !== 'program');
@@ -615,7 +631,7 @@
       ? 'Drafted by AI (Claude) from this member\u2019s questionnaire' + (S.getCheckins(memberId).length ? ' and check-ins' : '') + ', following the gym\u2019s meal-plan guide. Check it before you rely on any of it — <b>Copy into my plan</b> loads it into your editor so you can change anything before sending.'
       : 'A second opinion drafted by AI (Claude) from your answers. <b>Your coach\u2019s plan is the one to follow</b> — if something here looks useful, mention it to your coach.') + '</div>';
     const genLabel = busy ? 'Drafting… (up to a minute)' : SUGGEST_WITH_AI ? (ai ? 'Regenerate' : 'Get AI suggestion') : (ai ? 'Work it out again' : 'Work out a suggested plan');
-    const genBtn = '<button type="button" class="btn2' + (ai ? '' : ' primary') + '" data-ai-generate' + (busy ? ' disabled' : '') + '>' + genLabel + '</button>';
+    const genBtn = !SUGGEST_WITH_AI && ai && ai.model === 'program' ? '' : '<button type="button" class="btn2' + (ai ? '' : ' primary') + '" data-ai-generate' + (busy ? ' disabled' : '') + '>' + genLabel + '</button>';
     if (!ai){
       return html + '<div class="empty-msg">No suggested plan yet.<div class="mp-actions" style="justify-content:center;">' + genBtn + '</div></div>';
     }
@@ -629,7 +645,7 @@
       planViewHtml({ content: aiToContent(p) }, { collapsible: true, labels: { notes: 'Notes' } });
     if (p.rationale) html += '<details class="mp-plan-block mp-fold mp-rationale"><summary><span class="mp-fold-title">' + (byAi ? 'How the AI got here' : 'How it was worked out') + '</span>' +
       '<span class="mp-fold-preview">' + esc(p.rationale) + '</span></summary><p>' + esc(p.rationale) + '</p></details>';
-    html += '<div class="mp-actions">' + genBtn + '</div>';
+    if (genBtn) html += '<div class="mp-actions">' + genBtn + '</div>';
     return html;
   }
 
@@ -694,7 +710,7 @@
         '<p>Only your coach and the gym admin can see your answers. Prefer paper? <a href="docs/Meal_Plan_Questionnaire.pdf" target="_blank" rel="noopener">Download the printable questionnaire</a>.</p>') +
 
       step(2, 'We estimate how much energy you need',
-        '<p>Your coach starts from a standard formula (Mifflin-St Jeor) that uses your weight, height, age and sex to estimate what your body burns at rest, then multiplies it by how active you are — from 1.2 if you mostly sit, up to 1.725 if you\u2019re very active.</p>' +
+        '<p>Your coach starts from a standard formula (Mifflin-St Jeor) that uses your weight, height, age and sex to estimate what your body burns at rest, then multiplies it by how active you are — from 1.2 if you mostly sit, up to 1.9 if you train most days and have a physical job.</p>' +
         '<p>Then it\u2019s adjusted for your goal: about 300–500 kcal less a day for gradual fat loss, or 200–300 kcal more for building muscle. ' +
         'These are estimates. <b>How your body actually responds over 2–3 weeks matters more than the formula</b>, which is why step 7 exists.</p>' +
         yourNumbersHtml(answers)) +

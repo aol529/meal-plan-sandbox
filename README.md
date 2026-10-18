@@ -7,7 +7,7 @@ A standalone copy of the Bells n Barz **Meal Plan** feature (Me → Meal Plan / 
 - **View as** switches between demo members, coaches and an admin. Each member's coach is shown in the switcher.
 
 ## Suggested plan (a program, for now)
-Each member has two pages: **Coach's plan** and **Suggested plan**. The suggested plan is worked out in the browser by `js/plan-program.js`, with no AI and no server: the guide's calorie method (Mifflin-St Jeor × activity ± goal; a typical body size and a range when height or weight is missing), meal options from the foods the member loves and their way of eating, hand portions, swaps, eating out, a grocery list, gut-comfort notes and the weekly weigh-in rule. Check-ins with weights adjust the calories. Coaches can **Copy into my plan** to start from it. **Download PDF** (on the suggested plan, the member's coach's plan and the coach's plan editor) opens a clean printable copy; choose Save as PDF in the print box. The same program powers the coach's "Suggest from questionnaire" button and `starter.html`, so the numbers always agree.
+Each member has two pages: **Coach's plan** and **Suggested plan**. The suggested plan is worked out in the browser by `js/plan-program.js`, with no AI and no server: the guide's calorie method (Mifflin-St Jeor × activity ± goal; a typical body size and a range when height or weight is missing), meal options from the foods the member loves and their way of eating, hand portions, swaps, eating out, a grocery list, gut-comfort notes and the weekly weigh-in rule. Check-ins with weights adjust the calories. It's worked out again each time the page opens, so updated answers and new check-ins show straight away. Allergies and dislikes are respected ("No pork" avoids pork; "shellfish" doesn't rule out fish, "eggplant" doesn't rule out eggs; gluten, nuts, dairy and legumes are handled). Coaches can **Copy into my plan** to start from it. **Download PDF** (on the suggested plan, the member's coach's plan and the coach's plan editor) opens a clean printable copy; choose Save as PDF in the print box. The same program powers the coach's "Suggest from questionnaire" button and `starter.html`, so the numbers always agree.
 
 To go back to Claude drafting the suggestion, set `SUGGEST_WITH_AI = true` in `js/mealplan.js`, create a file named `.env` in this folder containing one line:
 
@@ -24,6 +24,7 @@ Either way the answers only fill the form, marked in green; nothing is saved unt
 
 ## Starter estimate
 `starter.html` (http://localhost:3001/starter.html): a starting point a client can follow right away, even with height or weight missing. Upload the questionnaire PDF (or type the answers) and it gives:
+- foods left out by way of eating (vegetarian, halal…) and what they won't eat or are allergic to
 - daily calories and macros by the guide's method (Mifflin-St Jeor × activity ± goal); without height/weight it assumes a typical adult of that sex in Kenya (about 158 cm women / 170 cm men, BMI 22) and shows the range for a smaller or larger body
 - hand portions that need no numbers, and a sample day built from the foods they love, scaled to the target
 - the weekly weigh-in rule that corrects the estimate, and gut-comfort notes when they mention bloating or constipation

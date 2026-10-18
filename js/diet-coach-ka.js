@@ -145,8 +145,8 @@
   function estimate(a){
     const age = Number(a && a.age), h = Number(a && a.height_cm), w = Number(a && a.weight_kg);
     if (!age || !h || !w || !a.sex) return null;
-    const exercise = String(a.exercise || '');
-    const perWeek = Number((exercise.match(/(\d+)\s*(x|×|times|days|sessions)/i) || [])[1]) || (exercise.trim() ? 2 : 0);
+    // Days a week read the same way as the suggested plan (js/plan-program.js).
+    const perWeek = window.MP_PROGRAM.exerciseDays(a.exercise);
     let factor = perWeek >= 6 ? 1.725 : perWeek >= 3 ? 1.55 : perWeek >= 1 ? 1.375 : 1.2;
     if (a.job_activity === 'Physically demanding') factor = Math.min(1.9, factor + 0.175);
     const activity = factor >= 1.725 ? 'Very active' : factor >= 1.55 ? 'Active' : factor >= 1.375 ? 'Lightly active' : 'Sedentary';

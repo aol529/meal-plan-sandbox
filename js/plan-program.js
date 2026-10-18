@@ -1,20 +1,23 @@
 /* ============================================================
    PLAN PROGRAM — works out a meal plan from questionnaire answers,
-   with no AI. The gym guide's method: Mifflin-St Jeor × activity,
-   ± the goal, protein by bodyweight, fat 30%, carbs the rest; meal
-   options built from the foods the member loves, their way of eating
-   and what they avoid; hand portions; and the weekly weigh-in rule
-   that corrects the estimate.
+   with no AI: meal options built from the foods the member loves, their
+   way of eating and what they avoid; hand portions; swaps, eating out,
+   a grocery list; and the weekly weigh-in rule that corrects the
+   estimate. The calories, macros, activity and goal come from the gym
+   app's formula (js/targets.js, a copy of js/bells-n-barz-targets.js).
 
-   Used by the "Suggested plan" page (js/mealplan.js), the coach's
-   "Suggest from questionnaire" button and starter.html, so all three
-   give the same numbers. Calories per food are rough averages for
-   common Kenyan foods; the weekly check takes care of the difference.
+   The gym app has the same program as js/bells-n-barz-plan-program.js;
+   only the targets' field names differ (target_calories… here, as in
+   this sandbox's store). Used by the "Suggested plan" page
+   (js/mealplan.js), the coach's "Suggest from questionnaire" button and
+   starter.html, so all three give the same numbers. Calories per food
+   are rough averages for common Kenyan foods; the weekly check takes
+   care of the difference.
    ============================================================ */
 window.MP_PROGRAM = (function(){
   const num = x => parseFloat(String(x == null ? '' : x).replace(',', '.')) || 0;
   const r10 = n => Math.round(n / 10) * 10, r50 = n => Math.round(n / 50) * 50;
-  // An answer that starts "None"/"No" (exercise, digestion)…
+  // A digestion answer that starts "None"/"No"…
   const NONE = /^\s*(none|no|nothing|n\/a|not sure)\b/i;
   // …but for foods to avoid only a whole-answer "none" counts, so "No pork" still avoids pork.
   const NONE_ONLY = /^[\s.!-]*(none|no|nil|nothing|n\/?a|not sure)( (known|really|at all|that i know of))?( (allergies|intolerances|dislikes))?[\s.!]*$/i;
@@ -23,62 +26,31 @@ window.MP_PROGRAM = (function(){
   // Height or weight missing: a typical adult of that sex in Kenya (about
   // 158 cm women, 170 cm men) at a healthy BMI of 22, with a smaller
   // (−6 cm, BMI 19) and larger (+7 cm, BMI 26) body for the range.
+  const T = window.BNB_TARGETS;
   const TYPICAL = { Female: 158, Male: 170 };
-  const GOAL_KCAL = { gain: 250, lose: -400, recomp: -200, maintain: 0 };
-  const bmr = (sex, kg, cm, age) => 10 * kg + 6.25 * cm - 5 * age + (sex === 'Male' ? 5 : -161);
-  // Exercise days set the level (0, 1–3, 4–5, 6–7 days); a job on your
-  // feet adds one level, a physically demanding job two.
-  function activity(job, days){
-    let level = days >= 6 ? 3 : days >= 4 ? 2 : days >= 1 ? 1 : 0;
-    if (job === 'On my feet some of the day') level += 1;
-    if (job === 'Physically demanding') level += 2;
-    return [1.2, 1.375, 1.55, 1.725, 1.9][Math.min(level, 4)];
-  }
   function bodies(v){
     if (v.height && v.weight) return { mid: { cm: v.height, kg: v.weight } };
     const typ = TYPICAL[v.sex] || TYPICAL.Female;
     const body = (dcm, bmi) => { const cm = v.height || typ + dcm; return { cm, kg: v.weight || bmi * Math.pow(cm / 100, 2) }; };
     return { low: body(-6, 19), mid: body(0, 22), high: body(7, 26) };
   }
+  // The shared formula, plus the check-in adjustment (never below its safe floor).
   function targets(v, body, adjust){
-    const kcal = bmr(v.sex, body.kg, body.cm, v.age || 25) * activity(v.job, v.days) + GOAL_KCAL[v.goal] + (adjust || 0);
-    const cal = Math.max(v.sex === 'Male' ? 1500 : 1200, kcal);
-    const protein = body.kg * (v.days > 0 ? 1.8 : 1.2);
-    const fat = cal * 0.3 / 9;
-    return { cal, protein, fat, carbs: Math.max(0, (cal - protein * 4 - fat * 9) / 4) };
+    const r = T.calc({ sex: v.sex === 'Male' ? 'male' : 'female', age: v.age || 25, heightCm: body.cm, weightKg: body.kg, factor: v.factor, goal: v.goal });
+    const cal = adjust ? Math.max(v.sex === 'Male' ? 1500 : 1200, r50(r.calories + adjust)) : r.calories;
+    // Rounded in the same order as the shared formula, so the numbers match exactly.
+    const protein = r.protein_g, fat = Math.round(cal * 0.3 / 9);
+    return { cal, protein, fat, carbs: Math.max(0, Math.round((cal - protein * 4 - fat * 9) / 4)), maintenance: r.maintenance, note: r.note };
   }
 
   /* ---------- Questionnaire answers -> the program's inputs ---------- */
-  // "Monday Tuesday and Wednesday", "gym 4x a week", "twice a week",
-  // "weekdays", "every day" -> days a week; "twice a month" is under one.
-  const WORD_NUM = { once: 1, twice: 2, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7 };
-  const DAY_NAME = /^(mon(day)?|tue(s(day)?)?|wed(nesday)?|thu(r(s(day)?)?)?|fri(day)?|sat(urday)?|sun(day)?)s?$/;
-  function exerciseDays(ex){
-    ex = String(ex || '').trim().toLowerCase();
-    if (!ex || NONE.test(ex)) return 0;
-    if (/every ?day|daily/.test(ex)) return 7;
-    const DAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
-    const range = ex.match(/\b(mon|tue|wed|thu|fri|sat|sun)[a-z]*\s*(?:-|–|to|through|till)\s*(mon|tue|wed|thu|fri|sat|sun)[a-z]*/);
-    if (range) return (DAYS.indexOf(range[2]) - DAYS.indexOf(range[1]) + 7) % 7 + 1;
-    const named = new Set((ex.match(/\b[a-z]+\b/g) || []).filter(w => DAY_NAME.test(w)).map(w => w.slice(0, 3)));
-    if (/weekends?/.test(ex)) named.add('sat').add('sun');
-    if (named.size) return named.size;
-    const m = ex.match(/\b(\d+|one|two|three|four|five|six|seven)\s*(x|×|times?|days?|sessions?)|\b(once|twice)\b/);
-    const n = m ? WORD_NUM[m[3] || m[1]] || num(m[1]) : 0;
-    if (n && /month/.test(ex)) return Math.round(n / 4.3);
-    return Math.min(7, n || (/weekdays/.test(ex) ? 5 : 2));
-  }
-
   function fromAnswers(a){
     a = a || {};
-    const days = exerciseDays(a.exercise);
-    const goals = a.goals || [];
-    const goal = goals.includes('Lose fat') && goals.includes('Build muscle') ? 'recomp' : goals.includes('Lose fat') ? 'lose'
-      : goals.includes('Build muscle') || /gain|bulk|add weight|put on/i.test(a.target || '') ? 'gain' : 'maintain';
+    const act = T.activityFromAnswers(a), days = act.perWeek, goal = T.goalFromAnswers(a);
     const wantsSnacks = /snack/i.test((a.anything_else || '') + ' ' + JSON.stringify(a.typical_day || {}));
     return {
       age: num(a.age), sex: a.sex === 'Male' ? 'Male' : 'Female', height: num(a.height_cm), weight: num(a.weight_kg),
-      job: a.job_activity || 'Mostly sitting', days, goal,
+      job: a.job_activity || 'Mostly sitting', days, factor: act.factor, activity: act.label, goal,
       meals: a.meals_per_day === '1' || a.meals_per_day === '2' ? (goal === 'lose' ? 2 : 3) : 3,
       snacks: goal === 'gain' || wantsSnacks || a.meals_per_day === '4 or more' ? 2 : 1,
       loves: a.loves || '', avoid: [a.dislikes, a.allergies].filter(x => x && !NONE_ONLY.test(x)).join(' '),
@@ -189,13 +161,14 @@ window.MP_PROGRAM = (function(){
       if (weeks >= 1.4){
         const rate = (last.kg - first.kg) / weeks;
         if (v.goal === 'gain') adjust = rate < 0.25 ? 150 : rate > 0.5 ? -150 : 0;
-        else if (v.goal === 'lose' || v.goal === 'recomp') adjust = rate > -0.25 ? -150 : rate < -0.75 ? 150 : 0;
+        else if (v.goal === 'lose') adjust = rate > -0.25 ? -150 : rate < -0.75 ? 150 : 0;
         else adjust = rate > 0.25 ? -150 : rate < -0.25 ? 150 : 0;
         notes.push('Check-ins: ' + (rate >= 0 ? '+' : '') + rate.toFixed(2) + ' kg a week over ' + Math.round(weeks) + ' weeks' +
           (adjust ? ', so ' + (adjust > 0 ? '+' : '') + adjust + ' kcal.' : ', on track, so no change.'));
       }
     }
     const B = bodies(v), t = targets(v, B.mid, adjust);
+    if (t.note) notes.push(t.note);
     const ranged = !!B.low;
     const lo = ranged && targets(v, B.low, adjust), hi = ranged && targets(v, B.high, adjust);
 
@@ -226,7 +199,7 @@ window.MP_PROGRAM = (function(){
     if (v.goal === 'gain') return { aim: 'gain 0.25–0.5 kg a week', rows: [
       ['Gaining less than 0.25 kg a week', 'Add about 150–200 kcal: an extra cupped hand of ugali or rice at dinner, or a banana and groundnuts snack'],
       ['0.25–0.5 kg a week', 'Keep going'], ['More than 0.5 kg a week', 'Take away about 150 kcal (half the extra starch)']] };
-    if (v.goal === 'lose' || v.goal === 'recomp') return { aim: 'lose 0.25–0.75 kg a week', rows: [
+    if (v.goal === 'lose') return { aim: 'lose 0.25–0.75 kg a week', rows: [
       ['Losing less than 0.25 kg a week', 'Take away about 150 kcal: half a cupped hand of starch at dinner'],
       ['0.25–0.75 kg a week', 'Keep going'], ['Losing faster, or tired and hungry', 'Add about 150 kcal back']] };
     return { aim: 'stay within 1 kg', rows: [['Moving more than 1 kg', 'Adjust by 150 kcal the other way']] };
@@ -286,25 +259,25 @@ window.MP_PROGRAM = (function(){
       ', vegetables ' + h.veg + ', fat ' + h.f + '.');
     parts.push('Weigh 2 mornings a week (same scale, after the toilet, before eating) and aim to ' + rule.aim + '. After 2 weeks:\n' + rule.rows.map(r => '- ' + r[0] + ': ' + r[1]).join('\n'));
     if (R.ranged) parts.push('No ' + [!v.height && 'height', !v.weight && 'weight'].filter(Boolean).join(' or ') + ' in the answers yet, so the targets are an estimate (range ' +
-      r50(R.lo.cal) + '–' + r50(R.hi.cal) + ' kcal). Adding them makes it exact; the weekly check corrects it either way.');
+      r50(Math.min(R.lo.cal, R.hi.cal)) + '–' + r50(Math.max(R.lo.cal, R.hi.cal)) + ' kcal). Adding them makes it exact; the weekly check corrects it either way.');
     if (v.goal === 'gain' && /glute|hip|bum|butt/i.test(v.target)) parts.push('For glutes and hips the food only works with the training: squats, hip thrusts and lunges, a little heavier over time. A flatter tummy comes mostly from less bloating and gaining slowly.');
     if (hasGutIssue(v.gut)) parts.push('For the digestion:\n' + GUT_TIPS.map(x => '- ' + x).join('\n'));
     if (/Yes|Maybe/.test(v.mealPrep)) parts.push('Cook once, eat twice: make a bigger dinner pot and take the leftovers for lunch.');
     if (v.budget) parts.push('Budget: eggs, beans, ndengu and omena are the cheapest proteins; cook beans in bulk and keep meat for a few days a week.');
 
-    const b = R.B.mid, f = activity(v.job, v.days);
+    const b = R.B.mid, goalText = { lose: ', minus 500 kcal to lose fat', gain: ', plus 250 kcal to gain', maintain: '' }[v.goal];
     const rationale = 'Mifflin-St Jeor for ' + v.sex.toLowerCase() + ', ' + (v.age || 25) + ', ' + Math.round(b.cm) + ' cm, ' + Math.round(b.kg) + ' kg' +
       (R.ranged ? ' (typical size, since ' + [!v.height && 'height', !v.weight && 'weight'].filter(Boolean).join(' and ') + ' are missing)' : '') +
-      ' = ' + Math.round(bmr(v.sex, b.kg, b.cm, v.age || 25)) + ' kcal at rest, × ' + f + ' for ' + v.job.toLowerCase() + ' and ' + v.days + ' exercise day' + (v.days === 1 ? '' : 's') + ' a week' +
-      (GOAL_KCAL[v.goal] ? ', ' + (GOAL_KCAL[v.goal] > 0 ? '+' : '') + GOAL_KCAL[v.goal] + ' kcal to ' + { gain: 'gain', lose: 'lose fat', recomp: 'lose fat while building muscle' }[v.goal] : '') +
-      ' → ' + r10(t.cal) + ' kcal. Protein ' + (v.days > 0 ? '1.8' : '1.2') + ' g/kg, fat 30%, carbs the rest. Meals are built from the foods they love' +
+      ' = ' + Math.round(T.bmr(v.sex === 'Male' ? 'male' : 'female', b.kg, b.cm, v.age || 25)) + ' kcal at rest, × ' + v.factor + ' (' + v.activity.toLowerCase() + ': ' + v.job.toLowerCase() + ', ' +
+      v.days + ' exercise day' + (v.days === 1 ? '' : 's') + ' a week) = about ' + t.maintenance + ' kcal to maintain' + (t.note && t.cal === t.maintenance ? '' : goalText) +
+      ' → ' + r50(t.cal) + ' kcal. Protein ' + (v.goal === 'gain' ? '1.8' : '1.6') + ' g/kg, fat 30%, carbs the rest (the gym app\u2019s formula, as in Food Log). Meals are built from the foods they love' +
       (v.diet && v.diet !== 'No restrictions' ? ' (' + v.diet.toLowerCase() + ')' : '') + (v.avoid ? ', leaving out what they avoid' : '') +
       ', with lunch and dinner starch sized so a typical day comes to about ' + r10(R.dayKcal) + ' kcal.' + (R.notes.length ? ' ' + R.notes.join(' ') : '');
 
     return {
       model: 'program',
       plan: {
-        targets: { target_calories: r10(t.cal), target_protein_g: Math.round(t.protein), target_carbs_g: Math.round(t.carbs), target_fat_g: Math.round(t.fat) },
+        targets: { target_calories: r50(t.cal), target_protein_g: Math.round(t.protein), target_carbs_g: Math.round(t.carbs), target_fat_g: Math.round(t.fat) },
         pattern, breakfasts: R.breakfasts.map(x => x.text), lunches: R.lunches.map(x => x.text), dinners: R.dinners.map(x => x.text),
         snacks: R.snacks.slice(0, 4).map(x => x.text), swaps, eating_out, grocery, notes: parts.join('\n\n'), rationale,
         referral_note: opts && opts.refer ? opts.refer : ''
@@ -312,13 +285,12 @@ window.MP_PROGRAM = (function(){
     };
   }
 
-  // For the coach's "Suggest from questionnaire" button: only with real height and weight.
+  // For the coach's "Suggest from questionnaire" button and How it works:
+  // only with real age, sex, height and weight.
   function suggestTargets(answers){
-    const v = fromAnswers(answers);
-    if (!answers || !answers.sex || !v.age || !v.height || !v.weight) return null;
-    const t = targets(v, { cm: v.height, kg: v.weight });
-    return { target_calories: r10(t.cal), target_protein_g: Math.round(t.protein), target_carbs_g: Math.round(t.carbs), target_fat_g: Math.round(t.fat) };
+    const t = answers && T.fromAnswers(answers);
+    return t && { target_calories: t.calories, target_protein_g: t.protein_g, target_carbs_g: t.carbs_g, target_fat_g: t.fat_g, note: t.note };
   }
 
-  return { fromAnswers, exerciseDays, build, plan, suggestTargets, activity, bmr, hands, weeklyRule, hasGutIssue, GUT_TIPS, GOAL_KCAL, r10, r50 };
+  return { fromAnswers, build, plan, suggestTargets, exerciseDays: T.exerciseDays, hands, weeklyRule, hasGutIssue, GUT_TIPS, r10, r50 };
 })();

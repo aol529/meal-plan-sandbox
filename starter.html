@@ -50,7 +50,7 @@
     <label>Exercise days a week <input class="mp-input" name="days" inputmode="numeric" value="0"></label>
     <label>Goal <select class="mp-input" name="goal">
       <option value="gain">Gain weight / build muscle</option><option value="lose">Lose fat</option>
-      <option value="recomp">Lose fat and build muscle</option><option value="maintain">Maintain</option></select></label>
+      <option value="maintain">Maintain</option></select></label>
     <label>Meals a day <select class="mp-input" name="meals"><option value="3s2">3 meals + 2 snacks</option><option value="3s1">3 meals + 1 snack</option><option value="3s0">3 meals</option><option value="2s1">2 meals + 1 snack</option><option value="2s2">2 meals + 2 snacks</option></select></label>
     <label class="st-full">Foods they love <input class="mp-input" name="loves" placeholder="e.g. chicken, fish, beans, ugali, rice"></label>
     <label>Way of eating <select class="mp-input" name="diet"><option>No restrictions</option><option>Vegetarian</option><option>Vegan</option><option>Pescatarian</option><option>Halal</option><option>Kosher</option><option>Other</option></select></label>
@@ -61,6 +61,7 @@
   <div id="st-out" class="st-out"></div>
 </main>
 
+<script src="js/targets.js"></script>
 <script src="js/plan-program.js"></script>
 <script>
 (function(){
@@ -72,8 +73,11 @@
   // The form -> the plan program's inputs (js/plan-program.js does the maths).
   function read(){
     const f = form.elements, n = x => parseFloat(String(x).replace(',', '.')) || 0;
+    const days = Math.min(7, Math.round(n(f.days.value)));
+    // Activity factor from the gym app's formula (js/targets.js).
+    const act = window.BNB_TARGETS.activityFromAnswers({ exercise: days + ' days', job_activity: f.job.value });
     return { age: n(f.age.value) || 25, sex: f.sex.value, height: n(f.height.value), weight: n(f.weight.value), job: f.job.value,
-      days: Math.min(7, Math.round(n(f.days.value))), goal: f.goal.value, meals: +f.meals.value[0], snacks: +f.meals.value[2],
+      days, factor: act.factor, activity: act.label, goal: f.goal.value, meals: +f.meals.value[0], snacks: +f.meals.value[2],
       loves: f.loves.value.trim(), avoid: P.fromAnswers({ dislikes: f.avoid.value.trim() }).avoid, diet: f.diet.value, gut: f.gut.value.trim(), target: '', typical: {} };
   }
 
@@ -81,7 +85,7 @@
     const v = read(), R = P.build(v, []), t = R.t, mid = R.B.mid, h = P.hands(v), rule = P.weeklyRule(v);
     const missing = [!v.height && 'height', !v.weight && 'weight'].filter(Boolean);
     const num = (val, unit, label, a, b) => '<div><span class="mp-t-num">' + val + unit + '</span><span class="mp-t-lbl">' + label + '</span>' +
-      (R.ranged ? '<div class="st-range">' + a + '–' + b + unit + '</div>' : '') + '</div>';
+      (R.ranged ? '<div class="st-range">' + Math.min(a, b) + '–' + Math.max(a, b) + unit + '</div>' : '') + '</div>';
     let out = '<div class="mp-section-head">1. Daily targets to start with</div>';
     if (R.ranged) out += '<p><span class="st-est">Estimate</span> No ' + missing.join(' or ') + ' yet, so this assumes a typical ' + (v.sex === 'Male' ? 'man' : 'woman') +
       ' (about ' + Math.round(mid.cm) + ' cm, ' + Math.round(mid.kg) + ' kg). The small numbers are the range for a smaller or larger body. <b>Start on the big number</b>; ' +
@@ -91,8 +95,9 @@
       num(r10(t.protein), 'g', 'protein', R.ranged && r10(R.lo.protein), R.ranged && r10(R.hi.protein)) +
       num(r10(t.carbs), 'g', 'carbs', R.ranged && r10(R.lo.carbs), R.ranged && r10(R.hi.carbs)) +
       num(r10(t.fat), 'g', 'fat', R.ranged && r10(R.lo.fat), R.ranged && r10(R.hi.fat)) + '</div>';
-    out += '<p class="field-hint">Mifflin-St Jeor × ' + P.activity(v.job, v.days) + ' activity (' + esc(v.job.toLowerCase()) + ', ' + v.days + ' exercise day' + (v.days === 1 ? '' : 's') + ' a week)' +
-      (P.GOAL_KCAL[v.goal] ? ', ' + (P.GOAL_KCAL[v.goal] > 0 ? '+' : '') + P.GOAL_KCAL[v.goal] + ' kcal for the goal' : '') + '. Protein ' + (v.days > 0 ? '1.8' : '1.2') + ' g per kg, fat 30%, carbs the rest.</p>';
+    out += '<p class="field-hint">Mifflin-St Jeor × ' + v.factor + ' (' + esc(v.activity.toLowerCase()) + ': ' + esc(v.job.toLowerCase()) + ', ' + v.days + ' exercise day' + (v.days === 1 ? '' : 's') + ' a week)' +
+      { lose: ', −500 kcal to lose fat', gain: ', +250 kcal to gain', maintain: '' }[v.goal] + '. Protein ' + (v.goal === 'gain' ? '1.8' : '1.6') + ' g per kg, fat 30%, carbs the rest: the gym app\u2019s formula.' +
+      (t.note ? ' ' + esc(t.note) : '') + '</p>';
 
     out += '<div class="mp-section-head">2. Portions without numbers — every main meal</div><ul>' +
       '<li><b>Protein:</b> ' + h.p + ' (chicken, fish, beef, liver, eggs) or 1½ cups of beans / ndengu</li>' +

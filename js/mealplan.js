@@ -528,8 +528,8 @@
     };
   }
 
-  // The guide's steps 2-3, worked out by the plan program
-  // (js/plan-program.js) so the coach's button, How it works and the
+  // The guide's steps 2-3 with the gym app's formula (js/targets.js, via
+  // js/plan-program.js) so the coach's button, How it works and the
   // suggested plan agree. A starting point for the coach to tweak, not a
   // final number — "her real-world results over 2-3 weeks matter more
   // than the formula."
@@ -691,11 +691,11 @@
     const t = a && suggestTargets(a);
     if (!t) return '';
     const age = Number(a.age), h = Number(a.height_cm), w = Number(a.weight_kg);
-    const bmr = Math.round(10 * w + 6.25 * h - 5 * age + (a.sex === 'Male' ? 5 : -161));
+    const bmr = Math.round(window.BNB_TARGETS.bmr(a.sex === 'Male' ? 'male' : 'female', w, h, age));
     return '<div class="mp-plan-block mp-your-numbers"><h4>With your answers</h4><p>' +
       esc(a.sex) + ', ' + esc(age) + ', ' + esc(h) + ' cm, ' + esc(w) + ' kg → about <b>' + bmr.toLocaleString() + ' kcal</b> a day at rest. ' +
       'With your activity and goal, a starting point of roughly <b>' + t.target_calories.toLocaleString() + ' kcal</b>: ' +
-      t.target_protein_g + ' g protein, ' + t.target_carbs_g + ' g carbs, ' + t.target_fat_g + ' g fat. ' +
+      t.target_protein_g + ' g protein, ' + t.target_carbs_g + ' g carbs, ' + t.target_fat_g + ' g fat. ' + (t.note ? esc(t.note) + ' ' : '') +
       'Your coach may set it differently — they know you, the formula doesn\u2019t.</p></div>';
   }
 

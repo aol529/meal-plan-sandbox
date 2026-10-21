@@ -1,0 +1,44 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # Publish only the site itself, not the server, AI code or README.
+      # Paths are relative, since Pages serves this under
+      # /meal-plan-sandbox/, not the domain root.
+      - name: Build site
+        run: |
+          mkdir -p _site
+          cp index.html starter.html _site/
+          cp -r css js docs _site/
+          # Cache-bust css/ and js/ links with this commit's id (the pages
+          # use ?v=__BUILD__ as a placeholder), so a normal reload after a
+          # deploy fetches the new files instead of a cached copy.
+          sed -i "s/__BUILD__/${GITHUB_SHA::8}/g" _site/*.html
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - id: deployment
+        uses: actions/deploy-pages@v4
